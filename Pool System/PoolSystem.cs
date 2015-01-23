@@ -66,7 +66,7 @@ public class PoolSystem : MonoBehaviour
 
     public virtual GameObject Spawn(Vector3 position, Quaternion rotation)
     {
-        _cacheGameObject = GetBullet();
+        _cacheGameObject = GetItem();
         _cacheTransform = _cacheGameObject.GetComponent<Transform>();
         _cacheTransform.position = position;
         _cacheTransform.rotation = rotation;
@@ -95,7 +95,7 @@ public class PoolSystem : MonoBehaviour
         return _cacheGameObject;
     }
 
-    protected virtual GameObject GetBullet()
+    protected virtual GameObject GetItem()
     {
         int index = GetFirstDisabled();
 

@@ -34,25 +34,4 @@ public class SceneLoader
 		Time.timeScale = 1.0f;
 		Application.LoadLevel(level);
 	}
-
-	public static void LoadNextLevel()
-	{
-		if (_parameters.ContainsKey("NextLevel"))
-			LoadLevel((string)_parameters["NextLevel"]);
-		else
-			LoadMenu ();
-	}
-	public static void LoadMenu()
-	{
-        Time.timeScale = 1.0f;
-        Screen.lockCursor = false;
-        Screen.showCursor = true;
-        ClearParams();
-        Application.LoadLevel("Menu");
-	}
-
-	public static void LoadWaitScreen()
-	{
-		LoadLevel ("WaitScreen");
-	}
 }
