@@ -2,32 +2,32 @@
 
 A collection of scripts that I use with Unity.
 
-### Controllers
+#### Controllers
 - 6 Degrees Of Freedom controller
 - FPS Controller (UnityScript to C# port + optimizations)
 
-## Graphics
+#### Graphics
 - A mesh merger
 - Fog transition
 
-### Messenger
+#### Messenger
 -A static message system with custom events.
 
-### Pool System
+#### Pool System
 - A simple Pool manager
 
-### Scene
+#### Scene
 - A scene loader with custom parameters
 
-### Settings
+#### Settings
 - AndroidUIRemover: Remove the navigation bar from your app.
 - AutoConfigGraphics: Decrease the quality for blacklisted GPUs
 
-### UI
+#### UI
 - TypeWritterEffect
 - OpenLinkOnClick
 
-### Utils
+#### Utils
 - Scripts for time, particles, ShakeEffect, etc.
 
 ## Licence
