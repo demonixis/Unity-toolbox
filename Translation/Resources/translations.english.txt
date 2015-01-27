@@ -1,0 +1,12 @@
+[
+	["speech.visit.elevator", "You can visit the station with the elevator"],
+	["speech.visit.welcome", "Welcome to the V. R. Station"],
+	["speech.visit.holodeck", "Welcome to the holodeck"],
+	["speech.visit.crewarea", "Here is the crew area"],
+	["speech.visit.underconstruction", "This place is under construction. Please come back later"]
+]
+
+
+
+
+
