@@ -1,14 +1,13 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
-using SimpleJSON;
 using System;
+using System.IO;
 
 public class Translation : MonoBehaviour
 {
     public static readonly string[] AvailableLanguages = { "English", "French" };
     private static Dictionary<string, string> s_gameTexts = new Dictionary<string, string>();
     private static bool s_initialized = false;
-
     public string language = string.Empty;
 
     void Awake()
@@ -18,24 +17,14 @@ public class Translation : MonoBehaviour
             s_initialized = true;
 
             string lang = language != string.Empty ? language : Application.systemLanguage.ToString();
-            string jsonString = string.Empty;
+            string trans = string.Empty;
 
             if (Array.IndexOf<string>(AvailableLanguages, lang) == -1)
                 lang = AvailableLanguages[0];
 
-            jsonString = Resources.Load<TextAsset>(string.Format("i18n/translations.{0}", lang.ToLower())).text;
+            trans = Resources.Load<TextAsset>(string.Format("i18n/translations.{0}", lang.ToLower())).text;
 
-            JSONNode json = JSON.Parse(jsonString);
-            int size = json.Count;
-
-            s_gameTexts = new Dictionary<string, string>(size);
-
-            JSONArray array;
-            for (int i = 0; i < size; i++)
-            {
-                array = json[i].AsArray;
-                s_gameTexts.Add(array[0].Value, array[1].Value);
-            }
+            s_gameTexts = ParseFile(trans);
         }
     }
 
@@ -52,5 +41,38 @@ public class Translation : MonoBehaviour
     {
         s_initialized = false;
         Awake();
+    }
+
+    public static Dictionary<string, string> ParseFile(string text)
+    {
+        var content = new Dictionary<string, string>();
+
+        using (var stream = new StringReader(text))
+        {
+            var line = stream.ReadLine();
+            var temp = new string[2];
+            var key = string.Empty;
+            var value = string.Empty;
+     
+            while (line != null)
+            {
+                temp = line.Split('=');
+
+                if (temp.Length > 0)
+                {
+                    key = temp[0].Trim();
+                    value = temp.Length == 2 ? temp[1].Trim() : key;
+
+                    if (content.ContainsKey(key))
+                        content[key] = value;
+                    else
+                        content.Add(key, value);
+                }
+
+                line = stream.ReadLine();
+            }
+        }
+
+        return content;
     }
 }

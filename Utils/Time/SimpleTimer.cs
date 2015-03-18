@@ -8,17 +8,22 @@ public class SimpleTimer : MonoBehaviour
 {
     [SerializeField]
     private float _interval = 0;
+
     [SerializeField]
     private bool _repeat = false;
+
+    [SerializeField]
+    private bool _ignoreTimeScale = false;
+
     private float _elapsedTime = 0;
     private bool _enabled = false;
 
-    public bool Enabled
+    public bool IsActive
     {
         get { return _enabled; }
     }
 
-	public float Interval
+	public float Duration
 	{
 		get { return _interval; }
 		set { _interval = value; }
@@ -29,6 +34,18 @@ public class SimpleTimer : MonoBehaviour
 		get { return _repeat; }
 		set { _repeat = value; }
 	}
+
+    public bool IgnoreTimeScale
+    {
+        get { return _ignoreTimeScale; }
+        set { _ignoreTimeScale = value; }
+    }
+
+    public float ElapsedTime
+    {
+        get { return _elapsedTime; }
+        set { _elapsedTime = value; }
+    }
 
 	public event EventHandler<EventArgs> Completed = null;
 
@@ -48,7 +65,7 @@ public class SimpleTimer : MonoBehaviour
 	{
         if (_enabled)
         {
-            _elapsedTime += Time.deltaTime;
+            _elapsedTime += _ignoreTimeScale ? Time.unscaledDeltaTime : Time.deltaTime;
 
             if (_elapsedTime >= _interval)
             {
@@ -62,7 +79,7 @@ public class SimpleTimer : MonoBehaviour
 
 	public float GetTimeRemaining()
 	{
-		return Interval - _elapsedTime;
+		return Duration - _elapsedTime;
 	}
 
 	public float GetPrecisePercent()

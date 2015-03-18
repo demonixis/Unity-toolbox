@@ -17,6 +17,8 @@ public class TypeWritterEffect : MonoBehaviour
     public int letterPerCycle = 3;
     public bool autoStart = true;
 
+    public bool Started { get; protected set; }
+
     public event EventHandler<EventArgs> Completed = null;
 
     void Start()
@@ -26,6 +28,8 @@ public class TypeWritterEffect : MonoBehaviour
 
         if (autoStart)
             Begin(_text.text);
+
+        Started = true;
     }
 
     void Update()

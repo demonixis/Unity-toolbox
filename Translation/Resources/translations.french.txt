@@ -1,7 +1,0 @@
-[
-	["speech.visit.elevator", "Vous pouvez visiter la station grâce à l'ascenseur"],
-	["speech.visit.welcome", "Bienvenue dans la station spatial V.R."],
-	["speech.visit.holodeck", "Bienvenue dans le holodeck"],
-	["speech.visit.crewarea", "C'est la chambre de l'équipage"],
-	["speech.visit.underconstruction", "Cette zone est en construction, revenez plus tard"]
-]

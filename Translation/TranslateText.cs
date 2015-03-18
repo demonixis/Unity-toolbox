@@ -8,11 +8,8 @@ public class TranslateText : MonoBehaviour
 
     void Start()
     {
-        if (key != string.Empty)
-        {
-            var text = GetComponent(typeof(Text)) as Text;
-            text.text = Translation.Get(key);   
-        }
+        var text = GetComponent(typeof(Text)) as Text;
+        text.text = Translation.Get(key != string.Empty ? key : text.text);
 
         Destroy(this);
     }
