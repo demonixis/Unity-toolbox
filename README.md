@@ -5,6 +5,10 @@ A collection of scripts that I use with Unity.
 #### Controllers
 - 6 Degrees Of Freedom controller
 - FPS Controller (UnityScript to C# port + optimizations)
+- VR Controller (Headtracking using the Dive SDK)
+
+#### PostProcess effects
+- CRTEffect
 
 #### Graphics
 - A mesh merger
@@ -28,14 +32,15 @@ A collection of scripts that I use with Unity.
 - PlasmaShader (Only tested on PC)
 
 #### Translation
-- A static class for translations
-- A modification of SimpleJSON
+- A static class for translations using a ini files
 - A class for translate an Unity.UI.Text element
 - An example of translation file
 
 #### UI
-- TypeWritterEffect
 - OpenLinkOnClick
+- TypeWritterEffect
+- UIAlphaFade
+- UISliderColor
 
 #### Utils
 - Scripts for time, particles, ShakeEffect, etc.
