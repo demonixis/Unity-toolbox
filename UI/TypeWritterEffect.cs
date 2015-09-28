@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class TypeWritterEffect : MonoBehaviour
 {
     private Text _text;
-    private StringBuilder _stringBuilder;
+    private StringBuilder _stringBuilder = new StringBuilder();
     private int _size = 0;
     private float _elaspedTime = 0;
     private string _contentText = string.Empty;
@@ -23,13 +23,12 @@ public class TypeWritterEffect : MonoBehaviour
 
     void Start()
     {
+        Started = true;
+
         _text = GetComponent(typeof(Text)) as Text;
-        _stringBuilder = new StringBuilder();
 
         if (autoStart)
             Begin(_text.text);
-
-        Started = true;
     }
 
     void Update()
@@ -43,6 +42,9 @@ public class TypeWritterEffect : MonoBehaviour
 
     public void Begin(string text)
     {
+        if (!Started)
+            Start();
+
         _contentText = text;
         _size = text.Length;
         _elaspedTime = displaySpeed;
@@ -51,6 +53,12 @@ public class TypeWritterEffect : MonoBehaviour
         _stringBuilder.Length = 0;
         _text.text = string.Empty;
         UpdateText();
+    }
+
+    public void Stop()
+    {
+        _elaspedTime = displaySpeed;
+        _done = true;
     }
 
     private void UpdateText()

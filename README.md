@@ -2,6 +2,9 @@
 
 A collection of scripts that I use with Unity.
 
+#### Cheatcode
+- Cheatcode & Cheatcode Manager
+
 #### Controllers
 - 6 Degrees Of Freedom controller
 - FPS Controller (UnityScript to C# port + optimizations)
@@ -33,14 +36,20 @@ A collection of scripts that I use with Unity.
 
 #### Translation
 - A static class for translations using a ini files
-- A class for translate an Unity.UI.Text element
-- An example of translation file
+- A class for translate an `Unity.UI.Text` element
+- An example of translation files
 
 #### UI
 - OpenLinkOnClick
+- PlaySoundOnClick
 - TypeWritterEffect
 - UIAlphaFade
+- UIFadePanel
 - UISliderColor
+
+#### Universal VR
+- An universal Virutal Reality Toolkit built for mobile devices. It works on Android, Windows Phone and iOS
+- Devices needs a gyro to work with this toolkit
 
 #### Utils
 - Scripts for time, particles, ShakeEffect, etc.

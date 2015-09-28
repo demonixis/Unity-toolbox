@@ -4,28 +4,35 @@ using UnityEngine.UI;
 
 public class UIAlphaFade : MonoBehaviour
 {
+    public static bool Fading = false;
     private Color _color = Color.white;
-    private bool _fading = false;
     public Image overlay;
-    public float duration = 0.5f;
+    public float speed = 1.2f;
+    public float minFade = 0.0f;
+    public float maxFade = 1.0f;
 
     public bool IsFading
     {
-        get { return _fading; }
+        get { return Fading; }
     }
 
     public event EventHandler<EventArgs> Completed = null;
 
+    void Awake()
+    {
+        Fading = false;
+    }
+
     void Update()
     {
-        if (_fading)
+        if (Fading)
         {
-            _color.a += Mathf.Clamp01(Time.unscaledDeltaTime * duration);
+            _color.a += Mathf.Clamp01(Time.unscaledDeltaTime * speed);
             overlay.color = _color;
 
-            if (_color.a >= 1.0f)
+            if (_color.a >= maxFade)
             {
-                _fading = false;
+                Fading = false;
 
                 if (Completed != null)
                     Completed(this, EventArgs.Empty);
@@ -35,9 +42,9 @@ public class UIAlphaFade : MonoBehaviour
 
     public void Reset(bool disable)
     {
-        _fading = disable;
+        Fading = disable;
         _color = overlay.color;
-        _color.a = 0.0f;
+        _color.a = minFade;
         overlay.color = _color;
         overlay.gameObject.SetActive(disable);
     }

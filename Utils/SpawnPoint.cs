@@ -17,12 +17,30 @@ public class SpawnPoint : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
+        if (other.tag == "Player")
+        {
+            var script = other.GetComponent<Player>();
 
+            if (script != null)
+            {
+                if (isWayPoint)
+                {
+                    script.Waypoint = transform.position;
+                    
+                    if (message != string.Empty)
+                        Messenger.Notify("ui.message.show", new GenericMessage<float>(Translation.Get(message), 2.5f));
+                }
+                else
+                    script.Done();
+            }
+
+            Destroy(this);
+        }
     }
 
     void OnDrawGizmos()
     {
         Gizmos.color = color;
-        Gizmos.DrawCube(transform.position, size);
+        Gizmos.DrawCube(transform.position, size == Vector3.zero ? transform.localScale : size);
     }
 }

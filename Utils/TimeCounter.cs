@@ -4,14 +4,22 @@ using UnityEngine;
 
 public class TimeCounter : MonoBehaviour
 {
-    private DateTime _startTime = DateTime.Now;
-    private float _minutes = 0;
-    private float _seconds = 0;
-    private float _miliseconds = 0;
+    private float _elapsedTime = 0.0f;
+    private float _minutes = 0.0f;
+    private float _seconds = 0.0f;
+    private float _miliseconds = 0.0f;
+    private bool _done = false;
+    private bool _timeAttackMode = true;
     private StringBuilder _builder = new StringBuilder();
     public int minutes = 5;
     public int seconds = 0;
     public int milliseconds = 0;
+
+    public bool TimeAttackMode
+    {
+        get { return _timeAttackMode; }
+        set { _timeAttackMode = value; }
+    }
 
     void Start()
     {
@@ -22,16 +30,40 @@ public class TimeCounter : MonoBehaviour
 
     void Update()
     {
-        if (_minutes == 0 && _minutes == 0 && _seconds == 0)
-            Messenger.Notify("player.died");
+        if (!_done)
+            _elapsedTime += Time.deltaTime;
+
+        if (_timeAttackMode && !_done && _minutes <= 0 && _minutes <= 0 && _seconds <= 0)
+        {
+            _done = true;
+            _minutes = 0.0f;
+            _seconds = 0.0f;
+            _miliseconds = 0.0f;
+            Messenger.Notify("time.over");
+        }
+
+#if UNITY_EDITOR
+        if (_timeAttackMode && Input.GetKeyDown(KeyCode.F12))
+            Messenger.Notify("time.over");
+#endif
+    }
+
+    public float GetMaxTime()
+    {
+        return (float)(minutes * 60 + seconds);
+    }
+
+    public float GetElapsedTime()
+    {
+        return _elapsedTime;
     }
 
     public string GetElaspsedTime()
     {
-        var diff = DateTime.Now - _startTime;
-        var dMins = diff.Minutes.ToString();
-        var dSecs = diff.Seconds.ToString();
-        var dMs = diff.Milliseconds.ToString();
+        var time = TimeSpan.FromSeconds(_elapsedTime);
+        var dMins = time.Minutes.ToString();
+        var dSecs = time.Seconds.ToString();
+        var dMs = time.Milliseconds.ToString();
 
         if (dMins.Length == 1)
             dMins = string.Concat("0", dMins);
@@ -49,7 +81,7 @@ public class TimeCounter : MonoBehaviour
         return string.Concat(dMins, ":", dSecs, ":", dMs);
     }
 
-    public string UpdateTime()
+    public string GetTime()
     {
         _builder.Length = 0;
 

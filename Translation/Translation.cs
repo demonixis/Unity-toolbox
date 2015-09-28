@@ -22,7 +22,7 @@ public class Translation : MonoBehaviour
             if (Array.IndexOf<string>(AvailableLanguages, lang) == -1)
                 lang = AvailableLanguages[0];
 
-            trans = Resources.Load<TextAsset>(string.Format("i18n/translations.{0}", lang.ToLower())).text;
+            trans = Resources.Load<TextAsset>(string.Format("Translations/Texts.{0}", lang.ToLower())).text;
 
             s_gameTexts = ParseFile(trans);
         }
@@ -33,6 +33,10 @@ public class Translation : MonoBehaviour
     {
         if (s_gameTexts.ContainsKey(key))
             return s_gameTexts[key];
+
+#if UNITY_EDITOR
+        Debug.Log(string.Format("The key {0} is missing", key));
+#endif
 
         return key;
     }
@@ -53,6 +57,8 @@ public class Translation : MonoBehaviour
             var temp = new string[2];
             var key = string.Empty;
             var value = string.Empty;
+            var i = 0;
+            var l = 0;
      
             while (line != null)
             {
@@ -61,7 +67,19 @@ public class Translation : MonoBehaviour
                 if (temp.Length > 0)
                 {
                     key = temp[0].Trim();
-                    value = temp.Length == 2 ? temp[1].Trim() : key;
+
+                    if (temp.Length > 2)
+                    {
+                        value = temp[1];
+                        for (i = 2, l = temp.Length; i < l; i++)
+                            value += "=" + temp[i];
+
+                        value = value.Trim();
+                    }
+                    else if (temp.Length == 2)
+                        value = temp[1].Trim();
+                    else
+                        value = key;
 
                     if (content.ContainsKey(key))
                         content[key] = value;

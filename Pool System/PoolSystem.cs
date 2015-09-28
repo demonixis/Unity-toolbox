@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 public class PoolSystem : MonoBehaviour
@@ -9,7 +8,6 @@ public class PoolSystem : MonoBehaviour
     private Transform _cacheTransform;
     private List<GameObject> _pool;
     private int _size = 0;
-    private bool _isNetworkGame;
     private bool _initialized = false;
     public GameObject prefab;
     public string poolName = "PoolSystem";
@@ -57,7 +55,6 @@ public class PoolSystem : MonoBehaviour
 
         _poolTransform = _cacheGameObject.GetComponent<Transform>();
         _pool = new List<GameObject>(poolSize);
-        _isNetworkGame = Network.isClient || Network.isServer;
 
         InitializePool();
 
@@ -66,7 +63,7 @@ public class PoolSystem : MonoBehaviour
 
     public virtual GameObject Spawn(Vector3 position, Quaternion rotation)
     {
-        _cacheGameObject = GetItem();
+        _cacheGameObject = GetBullet();
         _cacheTransform = _cacheGameObject.GetComponent<Transform>();
         _cacheTransform.position = position;
         _cacheTransform.rotation = rotation;
@@ -82,11 +79,7 @@ public class PoolSystem : MonoBehaviour
 
     protected virtual GameObject AddPrefab()
     {
-        if (_isNetworkGame)
-            _cacheGameObject = Network.Instantiate(prefab, Vector3.zero, Quaternion.identity, 0) as GameObject;
-        else
-            _cacheGameObject = Instantiate(prefab, Vector3.zero, Quaternion.identity) as GameObject;
-
+        _cacheGameObject = Instantiate(prefab, Vector3.zero, Quaternion.identity) as GameObject;
         _cacheGameObject.GetComponent<Transform>().parent = _poolTransform;
         _cacheGameObject.SetActive(false);
         _pool.Add(_cacheGameObject);
@@ -95,7 +88,7 @@ public class PoolSystem : MonoBehaviour
         return _cacheGameObject;
     }
 
-    protected virtual GameObject GetItem()
+    protected virtual GameObject GetBullet()
     {
         int index = GetFirstDisabled();
 
