@@ -1,32 +1,56 @@
 ﻿using UnityEngine;
-using System.Collections;
 
-public class ShootHighlighter : MonoBehaviour
+public sealed class ShootHighlighter : MonoBehaviour
 {
+    private bool _enabled = true;
     private Renderer[] _renderers;
     private int _renderersCount = 0;
-    private SimpleTimer _hlTimer;
     private bool _isHighlighted = false;
     public bool hasManyRenderers = true;
     public float highlightDuration = 1.5f;
     public Color normalColor = Color.white;
     public Color highlightColor = Color.green;
+    public bool keepRendererColor = false;
+    public bool preserveAlpha = true;
+
+    public Renderer[] Renderers
+    {
+        get { return _renderers; }
+    }
+
+    public int CountRenderers
+    {
+        get { return _renderersCount; }
+    }
 
     void Start()
     {
-        if (!hasManyRenderers)
+        if (GamePrefs.settings.ShaderQuality == MarsExtraction.GameSettings.ShaderQualityLevel.High)
         {
-            _renderers = new Renderer[0];
-            _renderers[0] = GetComponent<Renderer>();
+            if (!hasManyRenderers)
+            {
+                _renderers = new Renderer[1];
+                _renderers[0] = GetComponent<Renderer>();
+            }
+            else
+                _renderers = GetComponentsInChildren<Renderer>();
+
+            _renderersCount = _renderers.Length;
+
+            if (!_renderers[0].material.HasProperty("_Color"))
+            {
+                _enabled = false;
+                return;
+            }
+
+            if (keepRendererColor)
+                normalColor = _renderers[0].material.color;
+
+            if (preserveAlpha)
+                highlightColor.a = normalColor.a;
         }
         else
-            _renderers = GetComponentsInChildren<Renderer>();
-
-        _renderersCount = _renderers.Length;
-
-        _hlTimer = gameObject.AddComponent<SimpleTimer>();
-        _hlTimer.Duration = highlightDuration;
-        _hlTimer.Completed += (s, e) => SetNormal();
+            _enabled = false;
     }
 
     public void Highlight()
@@ -49,9 +73,12 @@ public class ShootHighlighter : MonoBehaviour
 
     private void SetColor(bool hl)
     {
-        for (int i = 0; i < _renderersCount; i++)
-            _renderers[i].material.color = hl ? normalColor : highlightColor;
+        if (_enabled)
+        {
+            for (int i = 0; i < _renderersCount; i++)
+                _renderers[i].material.color = hl ? normalColor : highlightColor;
+        }
 
-        _hlTimer.Begin();
+        Invoke("SetNormal", highlightDuration);
     }
 }

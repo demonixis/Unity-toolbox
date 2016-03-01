@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System;
 using System.IO;
 
-public class Translation : MonoBehaviour
+public sealed class Translation : MonoBehaviour
 {
     public static readonly string[] AvailableLanguages = { "English", "French" };
     private static Dictionary<string, string> s_gameTexts = new Dictionary<string, string>();
@@ -59,7 +59,7 @@ public class Translation : MonoBehaviour
             var value = string.Empty;
             var i = 0;
             var l = 0;
-     
+
             while (line != null)
             {
                 temp = line.Split('=');
@@ -86,6 +86,15 @@ public class Translation : MonoBehaviour
                     else
                         content.Add(key, value);
                 }
+                else if (key != string.Empty)
+                {
+                    temp = line.Split('\\');
+
+                    if (temp.Length > 0)
+                        content[key] += temp[0];
+                }
+                else
+                    key = string.Empty;
 
                 line = stream.ReadLine();
             }

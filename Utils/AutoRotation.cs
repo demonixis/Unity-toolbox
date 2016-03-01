@@ -1,18 +1,21 @@
 ﻿using UnityEngine;
 
-public class AutoRotation : MonoBehaviour
+namespace UnityToolbox.Utils
 {
-    public Vector3 axis = Vector3.up;
-    public float speed = 25.0f;
-    private Transform _transform;
-
-    void Start()
+    public sealed class AutoRotation : MonoBehaviour
     {
-        _transform = GetComponent(typeof(Transform)) as Transform;
-    }
+        private Transform _transform;
+        public Vector3 axis = Vector3.up;
+        public float speed = 25.0f;
 
-    void Update()
-    {
-        _transform.Rotate(axis, Time.deltaTime * speed);
+        void Start()
+        {
+            _transform = GetComponent(typeof(Transform)) as Transform;
+        }
+
+        void Update()
+        {
+            _transform.Rotate(axis, Time.deltaTime * speed);
+        }
     }
 }

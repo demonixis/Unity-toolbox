@@ -8,7 +8,7 @@ public class BasicMessage
         get { return new BasicMessage(); }
     }
 
-    public string Message { get; protected set; }
+    public string Message { get; set; }
 
     public BasicMessage()
     {
@@ -23,7 +23,7 @@ public class BasicMessage
 
 public class GenericMessage<T> : BasicMessage
 {
-    public T Value { get; protected set; }
+    public T Value { get; set; }
 
     public GenericMessage(T value)
     {
@@ -33,6 +33,20 @@ public class GenericMessage<T> : BasicMessage
     public GenericMessage(string message, T value)
         : base(message)
     {
+        Value = value;
+    }
+}
+
+public class IntegerMessage : GenericMessage<int>
+{
+    public IntegerMessage(string message, int value)
+        : base(message, value)
+    {
+    }
+
+    public void Set(string message, int value)
+    {
+        Message = message;
         Value = value;
     }
 }

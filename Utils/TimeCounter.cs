@@ -1,8 +1,10 @@
-﻿using System;
+﻿using MarsExtraction.Input;
+using System;
 using System.Text;
 using UnityEngine;
+using UnityEngine.UI;
 
-public class TimeCounter : MonoBehaviour
+public sealed class TimeCounter : MonoBehaviour
 {
     private float _elapsedTime = 0.0f;
     private float _minutes = 0.0f;
@@ -14,18 +16,50 @@ public class TimeCounter : MonoBehaviour
     public int minutes = 5;
     public int seconds = 0;
     public int milliseconds = 0;
+    public Text timeText;
+
+    public int Minutes
+    {
+        get { return (int)_minutes; }
+        set { _minutes = value; }
+    }
+
+    public int Seconds
+    {
+        get { return (int)_seconds; }
+        set { _seconds = value; }
+    }
+
+    public int Miliseconds
+    {
+        get { return (int)_miliseconds; }
+        set { _miliseconds = value; }
+    }
 
     public bool TimeAttackMode
     {
         get { return _timeAttackMode; }
-        set { _timeAttackMode = value; }
+        set
+        {
+            _timeAttackMode = value;
+            timeText.enabled = value;
+        }
     }
+
+    public EventHandler<EventArgs> TimerCompleted = null;
 
     void Start()
     {
-        _minutes = minutes;
-        _seconds = seconds;
-        _miliseconds = milliseconds;
+        if (_minutes == 0 && _seconds == 0 && _miliseconds == 0)
+        {
+            _minutes = minutes;
+            _seconds = seconds;
+            _miliseconds = milliseconds;
+
+            // FIXME
+            if (InputHelper.MustUseTouchControls)
+                _minutes += 10;
+        }
     }
 
     void Update()
@@ -33,19 +67,31 @@ public class TimeCounter : MonoBehaviour
         if (!_done)
             _elapsedTime += Time.deltaTime;
 
-        if (_timeAttackMode && !_done && _minutes <= 0 && _minutes <= 0 && _seconds <= 0)
+        if (_timeAttackMode)
         {
-            _done = true;
-            _minutes = 0.0f;
-            _seconds = 0.0f;
-            _miliseconds = 0.0f;
-            Messenger.Notify("time.over");
-        }
+            if (!_done && _minutes <= 0 && _minutes <= 0 && _seconds <= 0)
+            {
+                _done = true;
+                _minutes = 0.0f;
+                _seconds = 0.0f;
+                _miliseconds = 0.0f;
 
-#if UNITY_EDITOR
-        if (_timeAttackMode && Input.GetKeyDown(KeyCode.F12))
-            Messenger.Notify("time.over");
-#endif
+                if (TimerCompleted != null)
+                    TimerCompleted(this, EventArgs.Empty);
+
+                Messenger.Notify("time.over");
+            }
+
+            if (Time.timeScale > 0.0f && timeText.enabled)
+                timeText.text = GetTime();
+        }
+    }
+
+    public void SetTime(ushort minutes, ushort seconds, ushort miliseconds)
+    {
+        _minutes = minutes;
+        _seconds = seconds;
+        _miliseconds = miliseconds;
     }
 
     public float GetMaxTime()
@@ -77,7 +123,7 @@ public class TimeCounter : MonoBehaviour
             dMs = string.Concat("0", dMs);
         else if (dMs.Length > 2)
             dMs = string.Concat(dMs[0], dMs[1]);
-        
+
         return string.Concat(dMins, ":", dSecs, ":", dMs);
     }
 

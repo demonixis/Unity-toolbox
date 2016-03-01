@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-public class LifeTimeParticle : MonoBehaviour
+public sealed class LifeTimeParticle : MonoBehaviour
 {
     private float _elapsedTime = 0;
     private float lifeTime = 2.5f;

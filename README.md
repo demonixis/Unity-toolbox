@@ -1,58 +1,26 @@
-# Unity-toolbox
+Demonixis' Toolbox
+========================
 
-A collection of scripts that I use with Unity.
+The Demonixis' Toolbox is a collection of useful scripts for Unity 3D.
 
-#### Cheatcode
-- Cheatcode & Cheatcode Manager
+- Cheatcode manager
+- Controllers
+- Editor utilities
+- Effects
+- Graphics
+- Messenger system
+- Pool system
+- Scene management
+- Translation
+- UI
+- Utilities
+- Virtual Reality
 
-#### Controllers
-- 6 Degrees Of Freedom controller
-- FPS Controller (UnityScript to C# port + optimizations)
-- VR Controller (Headtracking using the Dive SDK)
+## Games using this toolkit
 
-#### PostProcess effects
-- CRTEffect
-
-#### Graphics
-- A mesh merger
-- Fog transition
-
-#### Messenger
--A static message system with custom events.
-
-#### Pool System
-- A simple Pool manager
-
-#### Scene
-- A scene loader with custom parameters
-
-#### Settings
-- AndroidUIRemover: Remove the navigation bar from your app.
-- AutoConfigGraphics: Decrease the quality for blacklisted GPUs
-
-#### Shaders
-- LavaShader (Don't work on PS Vita)
-- PlasmaShader (Only tested on PC)
-
-#### Translation
-- A static class for translations using a ini files
-- A class for translate an `Unity.UI.Text` element
-- An example of translation files
-
-#### UI
-- OpenLinkOnClick
-- PlaySoundOnClick
-- TypeWritterEffect
-- UIAlphaFade
-- UIFadePanel
-- UISliderColor
-
-#### Universal VR
-- An universal Virutal Reality Toolkit built for mobile devices. It works on Android, Windows Phone and iOS
-- Devices needs a gyro to work with this toolkit
-
-#### Utils
-- Scripts for time, particles, ShakeEffect, etc.
+- [M.A.R.S. Extraction](demonixis.itch.io/mars-extraction)
+- [Mythgreen VR](https://demonixis.itch.io/mythgreen-vr)
+- [The Lost Maze](https://demonixis.itch.io/the-lost-maze)
 
 ## Licence
 MIT Licence - take a look at the LICENSE file for more informations.

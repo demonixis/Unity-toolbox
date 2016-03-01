@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Text))]
-public class TypeWritterEffect : MonoBehaviour
+public sealed class TypeWritterEffect : MonoBehaviour
 {
     private Text _text;
     private StringBuilder _stringBuilder = new StringBuilder();
@@ -16,19 +16,33 @@ public class TypeWritterEffect : MonoBehaviour
     public float displaySpeed = 0.75f;
     public int letterPerCycle = 3;
     public bool autoStart = true;
+    public bool activeOnEnable = false;
 
-    public bool Started { get; protected set; }
+    public bool Started { get; private set; }
 
     public event EventHandler<EventArgs> Completed = null;
 
+    void OnEnable()
+    {
+        if (activeOnEnable)
+        {
+            autoStart = false;
+            Start();
+            Begin(Translation.Get(_text.text));
+        }
+    }
+
     void Start()
     {
-        Started = true;
+        if (!Started)
+        {
+            Started = true;
 
-        _text = GetComponent(typeof(Text)) as Text;
+            _text = GetComponent(typeof(Text)) as Text;
 
-        if (autoStart)
-            Begin(_text.text);
+            if (autoStart)
+                Begin(_text.text);
+        }
     }
 
     void Update()
@@ -42,9 +56,7 @@ public class TypeWritterEffect : MonoBehaviour
 
     public void Begin(string text)
     {
-        if (!Started)
-            Start();
-
+        Start();
         _contentText = text;
         _size = text.Length;
         _elaspedTime = displaySpeed;

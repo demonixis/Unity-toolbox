@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Slider))]
-public class UISliderColor : MonoBehaviour
+public sealed class UISliderColor : MonoBehaviour
 {
     private Slider _slider;
     public Color fullColor = Color.green;

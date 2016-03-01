@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class UIAlphaFade : MonoBehaviour
+public sealed class UIAlphaFade : MonoBehaviour
 {
     public static bool Fading = false;
     private Color _color = Color.white;

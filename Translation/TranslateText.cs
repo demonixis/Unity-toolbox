@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Text))]
-public class TranslateText : MonoBehaviour
+public sealed class TranslateText : MonoBehaviour
 {
     public string key;
 

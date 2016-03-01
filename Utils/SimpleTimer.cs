@@ -4,7 +4,7 @@ using UnityEngine;
 /// <summary>
 /// An event driven timer.
 /// </summary>
-public class SimpleTimer : MonoBehaviour
+public sealed class SimpleTimer : MonoBehaviour
 {
     [SerializeField]
     private float _interval = 0;

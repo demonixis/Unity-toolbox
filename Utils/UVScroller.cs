@@ -1,16 +1,30 @@
 ﻿using UnityEngine;
-using System.Collections;
 
-public class UVScroller : MonoBehaviour 
+namespace UnityToolbox.Utils
 {
-    public Vector2 scrollSpeed = new Vector2(0.5f, 0.5f);
-    public Material material;
-    private Vector2 _offset = Vector2.zero;
-
-    void Update()
+    public sealed class UVScroller : MonoBehaviour
     {
-        _offset.x = Time.time * scrollSpeed.x;
-        _offset.y = Time.time * scrollSpeed.y;
-        material.SetTextureOffset("_MainTex", _offset);
+        public Vector2 scrollSpeed = new Vector2(0.5f, 0.5f);
+        public Material material;
+        public bool useSharedMaterial = true;
+        private Vector2 _offset = Vector2.zero;
+        private float _elapsedTime = 0;
+
+        void Start()
+        {
+            if (material == null)
+            {
+                var renderer = (Renderer)GetComponent(typeof(Renderer));
+                material = useSharedMaterial ? renderer.sharedMaterial : renderer.material;
+            }
+        }
+
+        void Update()
+        {
+            _elapsedTime += Time.deltaTime;
+            _offset.x = _elapsedTime * scrollSpeed.x;
+            _offset.y = _elapsedTime * scrollSpeed.y;
+            material.SetTextureOffset("_MainTex", _offset);
+        }
     }
 }

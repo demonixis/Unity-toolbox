@@ -9,23 +9,35 @@ public class PoolSystem : MonoBehaviour
     private List<GameObject> _pool;
     private int _size = 0;
     private bool _initialized = false;
-    public GameObject prefab;
-    public string poolName = "PoolSystem";
-    public int poolSize = 10;
+
+    [Header("Basic Settings")]
+    [SerializeField]
+    protected string poolName = "PoolSystem";
+    [SerializeField]
+    protected GameObject prefab;
+    [SerializeField]
+    protected int poolSize = 10;
 
     public GameObject this[int index]
     {
         get { return _pool[index]; }
     }
 
+    public string PoolName
+    {
+        get { return poolName; }
+        set
+        {
+            poolName = value;
+            _cacheGameObject = GameObject.Find(poolName);
+            if (_cacheGameObject != null)
+                _cacheGameObject.name = poolName;
+        }
+    }
+
     public int Size
     {
         get { return GetSize(); }
-    }
-
-    void Awake()
-    {
-        BaseAwake();
     }
 
     public void Resize(int size)
@@ -46,7 +58,7 @@ public class PoolSystem : MonoBehaviour
         }
     }
 
-    protected void BaseAwake()
+    protected virtual void Start()
     {
         _cacheGameObject = GameObject.Find(poolName);
 

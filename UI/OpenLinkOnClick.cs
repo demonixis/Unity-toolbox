@@ -2,7 +2,7 @@
 using UnityEngine.UI;
 
 [RequireComponent(typeof(Button))]
-public class OpenLinkOnClick : MonoBehaviour 
+public sealed class OpenLinkOnClick : MonoBehaviour
 {
     private Button _button;
     public string url;
@@ -15,7 +15,8 @@ public class OpenLinkOnClick : MonoBehaviour
 
     void OnDestroy()
     {
-        _button.onClick.RemoveListener(OpenURL);
+        if (_button != null)
+            _button.onClick.RemoveListener(OpenURL);
     }
 
     public void OpenURL()

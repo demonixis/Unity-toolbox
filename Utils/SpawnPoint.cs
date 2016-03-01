@@ -1,17 +1,18 @@
 ﻿using UnityEngine;
-using System.Collections;
 
-public class SpawnPoint : MonoBehaviour
+public sealed class SpawnPoint : MonoBehaviour
 {
     public Vector3 size = Vector3.one;
     public Color color = Color.green;
+    public PrimitiveType primitiveType = PrimitiveType.Cube;
     public bool isWayPoint = false;
     public bool isLevelEnd = false;
+    public bool isSpawnPoint = false;
     public string message = string.Empty;
 
     void Start()
     {
-        if (!isWayPoint && !isLevelEnd)
+        if (isSpawnPoint)
             Destroy(this);
     }
 
@@ -19,19 +20,19 @@ public class SpawnPoint : MonoBehaviour
     {
         if (other.tag == "Player")
         {
-            var script = other.GetComponent<Player>();
-
-            if (script != null)
+            var player = other.GetComponent<Player>();
+            if (player != null)
             {
-                if (isWayPoint)
+                if (message != string.Empty)
                 {
-                    script.Waypoint = transform.position;
-                    
-                    if (message != string.Empty)
-                        Messenger.Notify("ui.message.show", new GenericMessage<float>(Translation.Get(message), 2.5f));
+                    var evt = new DisplayMessage(message, true, player.PlayerIndex, 2.5f);
+                    Messenger.Notify("ui.message.show", evt);
                 }
-                else
-                    script.Done();
+
+                if (isWayPoint)
+                    player.Waypoint = transform.position;
+                else if (isLevelEnd)
+                    player.SetLevelCompleted();
             }
 
             Destroy(this);
@@ -41,6 +42,11 @@ public class SpawnPoint : MonoBehaviour
     void OnDrawGizmos()
     {
         Gizmos.color = color;
-        Gizmos.DrawCube(transform.position, size == Vector3.zero ? transform.localScale : size);
+
+        if (primitiveType == PrimitiveType.Cube)
+            Gizmos.DrawCube(transform.position, size == Vector3.zero ? transform.localScale : size);
+
+        else if (primitiveType == PrimitiveType.Sphere)
+            Gizmos.DrawSphere(transform.position, size == Vector3.zero ? transform.localScale.x : size.x);
     }
 }
