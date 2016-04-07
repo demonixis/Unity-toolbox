@@ -1,6 +1,7 @@
 using UnityEngine;
 
 namespace Demonixis.Toolbox.VR
+{
 	/// <summary>
 	/// OsvrManager - Manages all aspect of the VR from this singleton.
 	/// </summary>
