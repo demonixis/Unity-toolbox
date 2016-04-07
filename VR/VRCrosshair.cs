@@ -1,10 +1,16 @@
-﻿using Demonixis.Toolbox.Utils;
-using DG.Tweening;
+﻿// Comment this if you don't use DotTween
+#define USE_DOTTWEEN
+
+using Demonixis.Toolbox.Utils;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+
+#if USE_DOTTWEEN
+using DG.Tweening;
+#endif
 
 namespace Demonixis.Toolbox.VR
 {
@@ -129,9 +135,14 @@ namespace Demonixis.Toolbox.VR
         private void SelectGameObject(GameObject go)
         {
             _eventSystem.SetSelectedGameObject(go);
-
-            var targetScale = go == null ? _normalScale : _highlightScale;
+			
+			var targetScale = go == null ? _normalScale : _highlightScale;
+			
+#if USE_DOTTWEEN
             _transform.DOScale(targetScale, go == null ? _normalTime : _highlightTime);
+#else
+            _transform.localScale = new Vector3(targetScale, targetScale, targetScale);
+#endif
         }
 
         private IEnumerator RestoreColor()
