@@ -1,4 +1,4 @@
-﻿#define USE_DOT_TWEEN
+﻿#define USE_DOT_TWEEN_
 using Demonixis.Toolbox.Utils;
 #if USE_DOT_TWEEN
 using DG.Tweening;
@@ -31,10 +31,12 @@ namespace Demonixis.Toolbox.VR
         private float _normalScale = 0.8f;
         [SerializeField]
         private float _highlightScale = 1.5f;
+#if USE_DOT_TWEEN
         [SerializeField]
         private float _highlightTime = 0.65f;
         [SerializeField]
         private float _normalTime = 0.35f;
+#endif
 
         [Header("Cursor")]
         [SerializeField]
@@ -56,7 +58,7 @@ namespace Demonixis.Toolbox.VR
 
             if (_selected != null)
             {
-                if (Input.GetButtonDown("Fire1") || Input.GetMouseButtonDown(0))
+                if (Input.GetButtonDown("Fire1"))
                     Click(_selected.gameObject);
                 else if (_eventSystem.currentSelectedGameObject != _selected.gameObject)
                     SelectGameObject(_selected.gameObject);
@@ -144,7 +146,7 @@ namespace Demonixis.Toolbox.VR
 
         private IEnumerator RestoreColor()
         {
-            yield return CoroutineHelper.UnscaledWaitForSeconds(0.6f);
+            yield return new WaitForSeconds(0.6f);
             _crosshair.color = _originalColor;
         }
     }

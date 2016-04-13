@@ -10,23 +10,12 @@ namespace Demonixis.Toolbox.VR
     public sealed class OsvrManager : MonoBehaviour
     {
         private static OsvrManager _instance = null;
-        private DisplayController m_displayController;
+        private DisplayController displayController;
 
         [SerializeField]
         private bool m_vrEnabled = true;
         [SerializeField]
         private bool m_showDirectModePreview = true;
-
-        public DisplayController DisplayController
-        {
-            get
-            {
-                if (m_displayController == null)
-                    m_displayController = FindObjectOfType<DisplayController>();
-
-                return m_displayController;
-            }
-        }
 
         #region Singleton
 
@@ -89,8 +78,8 @@ namespace Demonixis.Toolbox.VR
 
         public static Vector3 GetLocalPosition(byte viewerIndex)
         {
-            var displayController = Instance.DisplayController;
-            if (displayController && displayController.DisplayConfig != null)
+            var displayController = Instance.displayController;
+            if (displayController != null && displayController.DisplayConfig != null)
             {
                 var pose3 = displayController.DisplayConfig.GetViewerPose(viewerIndex);
                 return new Vector3((float)pose3.translation.x, (float)pose3.translation.y, (float)pose3.translation.z);
@@ -101,8 +90,8 @@ namespace Demonixis.Toolbox.VR
 
         public static Quaternion GetLocalRotation(uint viewerIndex)
         {
-            var displayController = Instance.DisplayController;
-            if (displayController && displayController.DisplayConfig != null)
+            var displayController = Instance.displayController;
+            if (displayController != null && displayController.DisplayConfig != null)
             {
                 var pose3 = displayController.DisplayConfig.GetViewerPose(viewerIndex);
                 return new Quaternion((float)pose3.rotation.x, (float)pose3.rotation.y, (float)pose3.rotation.z, (float)pose3.rotation.w);
@@ -115,7 +104,7 @@ namespace Demonixis.Toolbox.VR
         {
             var manager = Instance;
             var clientKit = ClientKit.instance;
-            var displayController = manager.DisplayController;
+            var displayController = manager.displayController;
 
             if (displayController != null && clientKit != null)
             {
@@ -139,7 +128,7 @@ namespace Demonixis.Toolbox.VR
 
         public static void SetIPD(float ipd)
         {
-            var displayController = Instance.DisplayController;
+            var displayController = Instance.displayController;
 
             if (displayController != null && displayController.UseRenderManager)
                 displayController.RenderManager.SetIPDMeters(ipd);
@@ -154,14 +143,14 @@ namespace Demonixis.Toolbox.VR
             {
                 if (vrEnabled)
                 {
-                    _instance.m_displayController = camera.transform.parent.gameObject.AddComponent<DisplayController>();
-                    _instance.m_displayController.showDirectModePreview = _instance.m_showDirectModePreview;
+                    _instance.displayController = camera.transform.parent.gameObject.AddComponent<DisplayController>();
+                    _instance.displayController.showDirectModePreview = _instance.m_showDirectModePreview;
                     camera.gameObject.AddComponent<VRViewer>();
                     _instance.StartCoroutine(_instance.RecenterView());
                 }
                 else
                 {
-                    Destroy(_instance.m_displayController);
+                    Destroy(_instance.displayController);
 
                     var viewers = FindObjectsOfType<VRViewer>();
                     for (int i = 0; i < viewers.Length; i++)

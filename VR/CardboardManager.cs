@@ -94,10 +94,6 @@ namespace Demonixis.Toolbox.VR
 #endif
         }
 
-        public static void SetIPD(float ipd)
-        {
-        }
-
         public static void SetVREnabled(bool vrEnabled)
         {
 #if UNITY_ANDROID

@@ -1,4 +1,4 @@
-﻿#define USE_CARDBOARD_SDK_
+﻿#define USE_CARDBOARD_SDK
 #define USE_OSVR_SDK
 
 using UnityEngine.VR;
@@ -24,11 +24,11 @@ namespace Demonixis.Toolbox.VR
 #if UNITY_STANDALONE
             HasOSVRHMDEnabled();
 #endif
-#if UNITY_ANDROID || UNITY_EDITOR
-            //HasGoogleCardboardEnabled();
-#endif
 #if UNITY_ANDROID || UNITY_STANDALONE || UNITY_EDITOR
             HasUnityVRHMDEnabled();
+#endif
+#if UNITY_ANDROID || UNITY_EDITOR
+            HasGoogleCardboardEnabled();
 #endif
             return _deviceType;
         }
@@ -51,10 +51,17 @@ namespace Demonixis.Toolbox.VR
 
         public static bool HasGoogleCardboardEnabled()
         {
+#if UNITY_ANDROID
+            if (_deviceType != VRDeviceType.Cardboard || _deviceType != VRDeviceType.None)
+                return false;
+
             if ((HasGoogleCardboardSupport() && !HasUnityVRHMDEnabled()) || ForceCardboardVR)
                 _deviceType = VRDeviceType.Cardboard;
 
             return _deviceType == VRDeviceType.Cardboard;
+#else
+            return false;
+#endif
         }
 
         public static bool HasGoogleCardboardSupport()
@@ -97,7 +104,7 @@ namespace Demonixis.Toolbox.VR
                 return VRSettings.renderScale;
 #if USE_CARDBOARD_SDK
             else if (_deviceType == VRDeviceType.Cardboard)
-                Cardboard.SDK.StereoScreenScale = scale;
+                return Cardboard.SDK.StereoScreenScale;
 #endif
 
             return 1.0f;
