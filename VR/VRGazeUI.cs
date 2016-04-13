@@ -1,16 +1,13 @@
-﻿// Comment this if you don't use DotTween
-#define USE_DOTTWEEN
-
+﻿#define USE_DOT_TWEEN
 using Demonixis.Toolbox.Utils;
+#if USE_DOT_TWEEN
+using DG.Tweening;
+#endif
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-
-#if USE_DOTTWEEN
-using DG.Tweening;
-#endif
 
 namespace Demonixis.Toolbox.VR
 {
@@ -18,7 +15,7 @@ namespace Demonixis.Toolbox.VR
     /// Display a crosshair in a world space canvas and use it to interact with the UI.
     /// </summary>
     [RequireComponent(typeof(Image))]
-    public sealed class VRCrosshair : MonoBehaviour
+    public sealed class VRGazeUI : MonoBehaviour
     {
         private List<RaycastResult> _raycasts = null;
         private PointerEventData _pointer = null;
@@ -59,7 +56,7 @@ namespace Demonixis.Toolbox.VR
 
             if (_selected != null)
             {
-                if (Input.GetButtonDown("Fire1"))
+                if (Input.GetButtonDown("Fire1") || Input.GetMouseButtonDown(0))
                     Click(_selected.gameObject);
                 else if (_eventSystem.currentSelectedGameObject != _selected.gameObject)
                     SelectGameObject(_selected.gameObject);
@@ -135,20 +132,19 @@ namespace Demonixis.Toolbox.VR
         private void SelectGameObject(GameObject go)
         {
             _eventSystem.SetSelectedGameObject(go);
-			
-			var targetScale = go == null ? _normalScale : _highlightScale;
-			
-#if USE_DOTTWEEN
+
+            var targetScale = go == null ? _normalScale : _highlightScale;
+
+#if USE_DOT_TWEEN
             _transform.DOScale(targetScale, go == null ? _normalTime : _highlightTime);
 #else
-            _transform.localScale = new Vector3(targetScale, targetScale, targetScale);
+            _transform.localScale = new Vector3(targetScale, targetScale, targetScale); 
 #endif
         }
 
         private IEnumerator RestoreColor()
         {
             yield return CoroutineHelper.UnscaledWaitForSeconds(0.6f);
-
             _crosshair.color = _originalColor;
         }
     }

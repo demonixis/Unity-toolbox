@@ -73,27 +73,6 @@ public static class LevelManager
         SceneManager.LoadScene(level);
     }
 
-    public static void LoadNextLevel()
-    {
-        if (_parameters.ContainsKey("NextLevel"))
-            LoadLevel((string)_parameters["NextLevel"]);
-        else
-            LoadMenu();
-    }
-
-    public static void LoadMenu()
-    {
-        Time.timeScale = 1.0f;
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        SceneManager.LoadScene("Menu");
-    }
-
-    public static void LoadWaitScreen()
-    {
-        LoadLevel("Loading");
-    }
-
     /// <summary>
     /// Restarts the current level.
     /// </summary>
@@ -111,27 +90,6 @@ public static class LevelManager
     {
         PrepareLevel();
         return SceneManager.LoadSceneAsync(level);
-    }
-
-    public static AsyncOperation LoadNextLevelAsync()
-    {
-        if (_parameters.ContainsKey("NextLevel"))
-            return LoadLevelAsync((string)_parameters["NextLevel"]);
-
-        return LoadMenuAsync();
-    }
-
-    public static AsyncOperation LoadMenuAsync()
-    {
-        Time.timeScale = 1.0f;
-        Cursor.lockState = CursorLockMode.None;
-        Cursor.visible = true;
-        return SceneManager.LoadSceneAsync("Menu");
-    }
-
-    public static AsyncOperation LoadWaitScreenAsync()
-    {
-        return LoadLevelAsync("Loading");
     }
 
     public static AsyncOperation RestartAsync()

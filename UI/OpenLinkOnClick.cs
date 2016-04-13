@@ -1,26 +1,29 @@
 ﻿using UnityEngine;
 using UnityEngine.UI;
 
-[RequireComponent(typeof(Button))]
-public sealed class OpenLinkOnClick : MonoBehaviour
+namespace Demonixis.Toolbox.UI
 {
-    private Button _button;
-    public string url;
-
-    void Start()
+    [RequireComponent(typeof(Button))]
+    public sealed class OpenLinkOnClick : MonoBehaviour
     {
-        _button = GetComponent(typeof(Button)) as Button;
-        _button.onClick.AddListener(OpenURL);
-    }
+        private Button _button;
+        public string url;
 
-    void OnDestroy()
-    {
-        if (_button != null)
-            _button.onClick.RemoveListener(OpenURL);
-    }
+        void Start()
+        {
+            _button = GetComponent(typeof(Button)) as Button;
+            _button.onClick.AddListener(OpenURL);
+        }
 
-    public void OpenURL()
-    {
-        Application.OpenURL(url);
+        void OnDestroy()
+        {
+            if (_button != null)
+                _button.onClick.RemoveListener(OpenURL);
+        }
+
+        public void OpenURL()
+        {
+            Application.OpenURL(url);
+        }
     }
 }

@@ -1,163 +1,175 @@
+﻿using OSVR.Unity;
+using System.Collections;
 using UnityEngine;
 
 namespace Demonixis.Toolbox.VR
 {
-	/// <summary>
-	/// OsvrManager - Manages all aspect of the VR from this singleton.
-	/// </summary>
-	public sealed class OsvrManager : MonoBehaviour
-	{
-		private static OsvrManager _instance = null;
-		private DisplayController _displayController;
+    /// <summary>
+    /// OsvrManager - Manages all aspect of the VR from this singleton.
+    /// </summary>
+    public sealed class OsvrManager : MonoBehaviour
+    {
+        private static OsvrManager _instance = null;
+        private DisplayController m_displayController;
 
-		[SerializeField]
-		private bool _vrEnabled = true;
+        [SerializeField]
+        private bool m_vrEnabled = true;
+        [SerializeField]
+        private bool m_showDirectModePreview = true;
 
-		public DisplayController DisplayController
-		{
-			get
-			{
-				if (_displayController == null)
-					_displayController = FindObjectOfType<DisplayController>();
+        public DisplayController DisplayController
+        {
+            get
+            {
+                if (m_displayController == null)
+                    m_displayController = FindObjectOfType<DisplayController>();
 
-				return _displayController;
-			}
-		}
+                return m_displayController;
+            }
+        }
 
-		#region Singleton
+        #region Singleton
 
-		public static OsvrManager Instance
-		{
-			get
-			{
-				if (_instance == null)
-				{
-					_instance = FindObjectOfType<OsvrManager>();
+        public static OsvrManager Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = FindObjectOfType<OsvrManager>();
 
-					if (_instance == null)
-					{
-						var go = new GameObject("OsvrManager");
-						_instance = go.AddComponent<OsvrManager>();
-					}
-				}
+                    if (_instance == null)
+                    {
+                        var go = new GameObject("OsvrManager");
+                        _instance = go.AddComponent<OsvrManager>();
+                    }
+                }
 
-				return _instance;
-			}
-		}
+                return _instance;
+            }
+        }
 
-		#endregion
+        #endregion
 
-		#region Default Unity pattern
+        #region Default Unity pattern
 
-		void Awake()
-		{
-			CheckInstance();
-		}
+        void Awake()
+        {
+            CheckInstance();
+        }
 
-		void OnEnabled()
-		{
-			CheckInstance();
-		}
+        void OnEnabled()
+        {
+            CheckInstance();
+        }
 
-		void Start()
-		{
-			if (_vrEnabled)
-				SetVREnabled(true);
-		}
+        void Start()
+        {
+            if (m_vrEnabled)
+                SetVREnabled(true);
+        }
 
-		private void CheckInstance()
-		{
-			if (_instance != null && _instance != this)
-				Destroy(this);
-			else if (_instance == null)
-				_instance = this;
-		}
+        private void CheckInstance()
+        {
+            if (_instance != null && _instance != this)
+                Destroy(this);
+            else if (_instance == null)
+                _instance = this;
+        }
 
-		#endregion
+        public IEnumerator RecenterView()
+        {
+            yield return new WaitForEndOfFrame();
+            Recenter();
+        }
 
-		#region Static Methods
+        #endregion
 
-		public static Vector3 GetLocalRotation(byte viewerIndex)
-		{
-			var displayController = Instance.DisplayController;
-			if (displayController)
-			{
-				var pose3 = displayController.DisplayConfig.GetViewerPose(viewerIndex);
-				return new Vector3((float)pose3.translation.x, (float)pose3.translation.y, (float)pose3.translation.z);
-			}
+        #region Static Methods
 
-			return Vector3.zero;
-		}
+        public static Vector3 GetLocalPosition(byte viewerIndex)
+        {
+            var displayController = Instance.DisplayController;
+            if (displayController && displayController.DisplayConfig != null)
+            {
+                var pose3 = displayController.DisplayConfig.GetViewerPose(viewerIndex);
+                return new Vector3((float)pose3.translation.x, (float)pose3.translation.y, (float)pose3.translation.z);
+            }
 
-		public static Quaternion GetLocalRotation(uint viewerIndex)
-		{
-			var displayController = Instance.DisplayController;
-			if (displayController)
-			{
-				var pose3 = displayController.DisplayConfig.GetViewerPose(viewerIndex);
-				return new Quaternion((float)pose3.rotation.x, (float)pose3.rotation.y, (float)pose3.rotation.z, (float)pose3.rotation.w);
-			}
+            return Vector3.zero;
+        }
 
-			return Quaternion.identity;
-		}
+        public static Quaternion GetLocalRotation(uint viewerIndex)
+        {
+            var displayController = Instance.DisplayController;
+            if (displayController && displayController.DisplayConfig != null)
+            {
+                var pose3 = displayController.DisplayConfig.GetViewerPose(viewerIndex);
+                return new Quaternion((float)pose3.rotation.x, (float)pose3.rotation.y, (float)pose3.rotation.z, (float)pose3.rotation.w);
+            }
 
-		public static void Recenter()
-		{
-			var manager = Instance;
-			var clientKit = ClientKit.instance;
-			var displayController = manager.DisplayController;
+            return Quaternion.identity;
+        }
 
-			if (displayController != null && clientKit != null)
-			{
-				if (displayController.UseRenderManager)
-					displayController.RenderManager.SetRoomRotationUsingHead();
-				else
-					clientKit.context.SetRoomRotationUsingHead();
-			}
-		}
+        public static void Recenter()
+        {
+            var manager = Instance;
+            var clientKit = ClientKit.instance;
+            var displayController = manager.DisplayController;
 
-		public static bool IsServerConnected()
-		{
-			var clientKit = ClientKit.instance;
-			return clientKit != null && clientKit.context != null && clientKit.context.CheckStatus();
-		}
+            if (displayController != null && clientKit != null)
+            {
+                if (displayController.UseRenderManager)
+                    displayController.RenderManager.SetRoomRotationUsingHead();
+                else
+                    clientKit.context.SetRoomRotationUsingHead();
+            }
+        }
 
-		public static void SetRenderScale(float scale)
-		{
-			Debug.Log("[OsvrManager] SetRenderScale not yet supported");
-		}
+        public static bool IsServerConnected()
+        {
+            var clientKit = ClientKit.instance;
+            return clientKit != null && clientKit.context != null && clientKit.context.CheckStatus();
+        }
 
-		public static void SetIPD(float ipd)
-		{
-			var displayController = Instance.DisplayController;
+        public static void SetRenderScale(float scale)
+        {
+            Debug.Log("[OsvrManager] SetRenderScale not yet supported");
+        }
 
-			if (displayController != null && displayController.UseRenderManager)
-				displayController.RenderManager.SetIPDMeters(ipd);
-		}
+        public static void SetIPD(float ipd)
+        {
+            var displayController = Instance.DisplayController;
 
-		public static void SetVREnabled(bool vrEnabled)
-		{
-			var clientKit = ClientKit.instance;
-			var camera = Camera.main;
+            if (displayController != null && displayController.UseRenderManager)
+                displayController.RenderManager.SetIPDMeters(ipd);
+        }
 
-			if (camera != null && clientKit != null && clientKit.context != null && clientKit.context.CheckStatus())
-			{
-				if (vrEnabled)
-				{
-					camera.transform.parent.gameObject.AddComponent<DisplayController>();
-					camera.gameObject.AddComponent<VRViewer>();
-				}
-				else
-				{
-					Destroy(FindObjectOfType<DisplayController>());
+        public static void SetVREnabled(bool vrEnabled)
+        {
+            var clientKit = ClientKit.instance;
+            var camera = Camera.main;
 
-					var viewers = FindObjectsOfType<VRViewer>();
-					for (int i = 0; i < viewers.Length; i++)
-						Destroy(viewers[i]);
-				}
-			}
-		}
+            if (camera != null && clientKit != null && clientKit.context != null && clientKit.context.CheckStatus())
+            {
+                if (vrEnabled)
+                {
+                    _instance.m_displayController = camera.transform.parent.gameObject.AddComponent<DisplayController>();
+                    _instance.m_displayController.showDirectModePreview = _instance.m_showDirectModePreview;
+                    camera.gameObject.AddComponent<VRViewer>();
+                    _instance.StartCoroutine(_instance.RecenterView());
+                }
+                else
+                {
+                    Destroy(_instance.m_displayController);
 
-		#endregion
-	}
+                    var viewers = FindObjectsOfType<VRViewer>();
+                    for (int i = 0; i < viewers.Length; i++)
+                        Destroy(viewers[i]);
+                }
+            }
+        }
+
+        #endregion
+    }
 }
