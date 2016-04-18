@@ -7,15 +7,13 @@ namespace Demonixis.Toolbox.VR
     /// <summary>
     /// OsvrManager - Manages all aspect of the VR from this singleton.
     /// </summary>
-    public sealed class OsvrManager : MonoBehaviour
+    public sealed class OsvrManager : VRManager
     {
         private static OsvrManager _instance = null;
         private DisplayController displayController;
 
         [SerializeField]
-        private bool m_vrEnabled = true;
-        [SerializeField]
-        private bool m_showDirectModePreview = true;
+        private bool showDirectModePreview = true;
 
         #region Singleton
 
@@ -40,25 +38,15 @@ namespace Demonixis.Toolbox.VR
 
         #endregion
 
-        #region Default Unity pattern
-
-        void Awake()
+#if UNITY_EDITOR
+        void Update()
         {
-            CheckInstance();
+            if (displayController != null)
+                displayController.showDirectModePreview = showDirectModePreview;
         }
+#endif
 
-        void OnEnabled()
-        {
-            CheckInstance();
-        }
-
-        void Start()
-        {
-            if (m_vrEnabled)
-                SetVREnabled(true);
-        }
-
-        private void CheckInstance()
+        protected override void CheckInstance()
         {
             if (_instance != null && _instance != this)
                 Destroy(this);
@@ -72,7 +60,43 @@ namespace Demonixis.Toolbox.VR
             Recenter();
         }
 
-        #endregion
+        public void SetIPD(float ipd)
+        {
+            var displayController = Instance.displayController;
+
+            if (displayController != null && displayController.UseRenderManager)
+                displayController.RenderManager.SetIPDMeters(ipd);
+        }
+
+        public override void SetVREnabled(bool isEnabled)
+        {
+            if (UnityEngine.VR.VRSettings.enabled && UnityEngine.VR.VRDevice.isPresent)
+                return;
+
+            var clientKit = ClientKit.instance;
+            var camera = Camera.main;
+
+            if (camera != null && clientKit != null && clientKit.context != null && clientKit.context.CheckStatus())
+            {
+                if (isEnabled)
+                {
+                    displayController = camera.transform.parent.gameObject.AddComponent<DisplayController>();
+                    displayController.showDirectModePreview = _instance.showDirectModePreview;
+                    camera.gameObject.AddComponent<VRViewer>();
+                    StartCoroutine(_instance.RecenterView());
+                }
+                else
+                {
+                    Destroy(_instance.displayController);
+
+                    var viewers = FindObjectsOfType<VRViewer>();
+                    for (int i = 0; i < viewers.Length; i++)
+                        Destroy(viewers[i]);
+                }
+
+                vrEnabled = isEnabled;
+            }
+        }
 
         #region Static Methods
 
@@ -124,39 +148,6 @@ namespace Demonixis.Toolbox.VR
         public static void SetRenderScale(float scale)
         {
             Debug.Log("[OsvrManager] SetRenderScale not yet supported");
-        }
-
-        public static void SetIPD(float ipd)
-        {
-            var displayController = Instance.displayController;
-
-            if (displayController != null && displayController.UseRenderManager)
-                displayController.RenderManager.SetIPDMeters(ipd);
-        }
-
-        public static void SetVREnabled(bool vrEnabled)
-        {
-            var clientKit = ClientKit.instance;
-            var camera = Camera.main;
-
-            if (camera != null && clientKit != null && clientKit.context != null && clientKit.context.CheckStatus())
-            {
-                if (vrEnabled)
-                {
-                    _instance.displayController = camera.transform.parent.gameObject.AddComponent<DisplayController>();
-                    _instance.displayController.showDirectModePreview = _instance.m_showDirectModePreview;
-                    camera.gameObject.AddComponent<VRViewer>();
-                    _instance.StartCoroutine(_instance.RecenterView());
-                }
-                else
-                {
-                    Destroy(_instance.displayController);
-
-                    var viewers = FindObjectsOfType<VRViewer>();
-                    for (int i = 0; i < viewers.Length; i++)
-                        Destroy(viewers[i]);
-                }
-            }
         }
 
         #endregion

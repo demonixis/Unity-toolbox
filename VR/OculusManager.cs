@@ -7,7 +7,7 @@ namespace Demonixis.Toolbox.VR
     /// <summary>
     /// OculusManager - Manages all aspect of the VR from this singleton.
     /// </summary>
-    public sealed class OculusManager : MonoBehaviour
+    public sealed class OculusManager : VRManager
     {
         private static string[] AnchorNames = new string[]
         {
@@ -21,8 +21,6 @@ namespace Demonixis.Toolbox.VR
         private static OculusManager _instance = null;
         private OVRManager ovrManager = null;
 
-        [SerializeField]
-        private bool m_vrEnabled = true;
         [SerializeField]
         private bool queueAhead = true;
         [SerializeField]
@@ -55,25 +53,7 @@ namespace Demonixis.Toolbox.VR
 
         #endregion
 
-        #region Default Unity pattern
-
-        void Awake()
-        {
-            CheckInstance();
-        }
-
-        void OnEnabled()
-        {
-            CheckInstance();
-        }
-
-        void Start()
-        {
-            if (m_vrEnabled)
-                SetVREnabled(true);
-        }
-
-        private void CheckInstance()
+        protected override void CheckInstance()
         {
             if (_instance != null && _instance != this)
                 Destroy(this);
@@ -87,7 +67,53 @@ namespace Demonixis.Toolbox.VR
             Recenter();
         }
 
-        #endregion
+        public override void SetVREnabled(bool isEnabled)
+        {
+            if (!VRDevice.isPresent || VRSettings.loadedDevice != VRDeviceType.Oculus)
+                return;
+
+#if UNITY_ANDROID
+            if (QualitySettings.vSyncCount != 0)
+                QualitySettings.vSyncCount = 0;
+#endif
+            if (isEnabled && ovrManager == null)
+            {
+                var camera = Camera.main.GetComponent<Transform>();
+                var trackingSpace = camera.parent;
+
+                if (trackingSpace == null || trackingSpace.parent == null)
+                    throw new UnityException("[OculusManager] Your prefab doesn't respect the correct hierarchy");
+
+                CreateDefaultStructure(trackingSpace);
+
+                var head = trackingSpace.parent.gameObject;
+                head.AddComponent<OVRCameraRig>();
+
+                ovrManager = head.AddComponent<OVRManager>();
+                ovrManager.queueAhead = _instance.queueAhead;
+                ovrManager.trackingOriginType = _instance.trackingOriginType;
+                ovrManager.usePositionTracking = _instance.usePositionTracking;
+                ovrManager.resetTrackerOnLoad = _instance.resetTrackerOnLoad;
+            }
+
+            vrEnabled = isEnabled;
+            VRSettings.enabled = isEnabled;
+        }
+
+        private void CreateDefaultStructure(Transform trackingSpace)
+        {
+            for (int i = 0, l = AnchorNames.Length; i < l; i++)
+                CreateAnchor(trackingSpace, AnchorNames[i]);
+        }
+
+        private void CreateAnchor(Transform trackingSpace, string name)
+        {
+            if (!trackingSpace.Find(name))
+            {
+                var anchor = new GameObject(name);
+                anchor.transform.parent = trackingSpace;
+            }
+        }
 
         #region Static Methods
 
@@ -125,56 +151,6 @@ namespace Demonixis.Toolbox.VR
 #endif
         }
 
-        public static void SetVREnabled(bool vrEnabled)
-        {
-            if (!VRDevice.isPresent || VRDevice.model != "Oculus")
-                return;
-
-#if UNITY_ANDROID
-            if (QualitySettings.vSyncCount != 0)
-                QualitySettings.vSyncCount = 0;
-#endif
-            var ovrManager = Instance.ovrManager;
-
-            if (vrEnabled && ovrManager == null)
-            {
-                var camera = Camera.main.GetComponent<Transform>();
-                var trackingSpace = camera.parent;
-
-                if (trackingSpace == null || trackingSpace.parent == null)
-                    throw new UnityException("[OculusManager] Your prefab doesn't respect the correct hierarchy");
-
-                CreateDefaultStructure(trackingSpace);
-
-                var head = trackingSpace.parent.gameObject;
-                head.AddComponent<OVRCameraRig>();
-
-                ovrManager = head.AddComponent<OVRManager>();
-                ovrManager.queueAhead = _instance.queueAhead;
-                ovrManager.trackingOriginType = _instance.trackingOriginType;
-                ovrManager.usePositionTracking = _instance.usePositionTracking;
-                ovrManager.resetTrackerOnLoad = _instance.resetTrackerOnLoad;
-                Instance.ovrManager = ovrManager;
-            }
-
-            VRSettings.enabled = vrEnabled;
-        }
-
-        private static void CreateDefaultStructure(Transform trackingSpace)
-        {
-            for (int i = 0, l = AnchorNames.Length; i < l; i++)
-                CreateAnchor(trackingSpace, AnchorNames[i]);
-        }
-
-        private static void CreateAnchor(Transform trackingSpace, string name)
-        {
-            if (!trackingSpace.Find(name))
-            {
-                var gameObject = new GameObject(name);
-                gameObject.transform.parent = trackingSpace;
-            }
-        }
-
-#endregion
+        #endregion
     }
 }

@@ -2,12 +2,10 @@
 
 namespace Demonixis.Toolbox.VR
 {
-    public class CardboardManager : MonoBehaviour
+    public class CardboardManager : VRManager
     {
         private static CardboardManager _instance = null;
-
-        [SerializeField]
-        private bool m_vrEnabled = true;
+        private Cardboard cardboard = null;
 
         #region Singleton
 
@@ -32,25 +30,7 @@ namespace Demonixis.Toolbox.VR
 
         #endregion
 
-        #region Default Unity pattern
-
-        void Awake()
-        {
-            CheckInstance();
-        }
-
-        void OnEnabled()
-        {
-            CheckInstance();
-        }
-
-        void Start()
-        {
-            if (m_vrEnabled)
-                SetVREnabled(true);
-        }
-
-        private void CheckInstance()
+        protected override void CheckInstance()
         {
             if (_instance != null && _instance != this)
                 Destroy(this);
@@ -58,7 +38,32 @@ namespace Demonixis.Toolbox.VR
                 _instance = this;
         }
 
-        #endregion
+        public override void SetVREnabled(bool isEnabled)
+        {
+#if !UNITY_ANDROID
+            if (UnityEngine.VR.VRDevice.isPresent)
+                return;
+
+            if (isEnabled)
+            {
+                if (cardboard == null)
+                {
+                    var camera = Camera.main.gameObject;
+                    var parent = camera.transform.parent.gameObject;
+
+                    camera.AddComponent<StereoController>();
+                    parent.AddComponent<CardboardHead>();
+                    _instance.cardboard = _instance.gameObject.AddComponent<Cardboard>();
+                }
+                else
+                    cardboard.VRModeEnabled = true;
+            }
+            else if (cardboard != null)
+                cardboard.VRModeEnabled = false;
+
+            vrEnabled = isEnabled;
+#endif
+        }
 
         #region Static Methods
 
@@ -91,33 +96,6 @@ namespace Demonixis.Toolbox.VR
         {
 #if UNITY_ANDROID
             Cardboard.SDK.StereoScreenScale = scale;
-#endif
-        }
-
-        public static void SetVREnabled(bool vrEnabled)
-        {
-#if UNITY_ANDROID
-            if (UnityEngine.VR.VRDevice.isPresent)
-                return;
-
-            var cardboard = _instance.cardboard;
-
-            if (vrEnabled)
-            {
-                if (cardboard == null)
-                {
-                    var camera = Camera.main.gameObject;
-                    var parent = camera.transform.parent.gameObject;
-
-                    camera.AddComponent<StereoController>();
-                    parent.AddComponent<CardboardHead>();
-                    _instance.gameObject.AddComponent<Cardboard>();
-                }
-                else
-                    cardboard.VRModeEnabled = true;
-            }
-            else if (cardboard != null)
-                cardboard.VRModeEnabled = false;
 #endif
         }
     }

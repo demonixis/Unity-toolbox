@@ -109,7 +109,7 @@ namespace Demonixis.Toolbox.VR
         {
             yield return new WaitForEndOfFrame();
 
-            var scaling = GameVRSettings.GetRenderScale();
+            var scaling = GameVRSettings.RenderScale;
             var screenCenter = new Vector2(Screen.width * 0.5f * scaling, Screen.height * 0.5f * scaling);
 
             _eventSystem = EventSystem.current;
