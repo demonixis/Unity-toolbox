@@ -70,9 +70,6 @@ namespace Demonixis.Toolbox.VR
 
         public override void SetVREnabled(bool isEnabled)
         {
-            if (UnityEngine.VR.VRSettings.enabled && UnityEngine.VR.VRDevice.isPresent)
-                return;
-
             var clientKit = ClientKit.instance;
             var camera = Camera.main;
 
@@ -83,7 +80,7 @@ namespace Demonixis.Toolbox.VR
                     displayController = camera.transform.parent.gameObject.AddComponent<DisplayController>();
                     displayController.showDirectModePreview = _instance.showDirectModePreview;
                     camera.gameObject.AddComponent<VRViewer>();
-                    StartCoroutine(_instance.RecenterView());
+                    StartCoroutine(RecenterView());
                 }
                 else
                 {

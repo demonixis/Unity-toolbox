@@ -96,6 +96,9 @@ namespace Demonixis.Toolbox.VR
                 ovrManager.resetTrackerOnLoad = _instance.resetTrackerOnLoad;
             }
 
+			if (isEnabled)
+				StartCoroutine(RecenterView());
+
             vrEnabled = isEnabled;
             VRSettings.enabled = isEnabled;
         }

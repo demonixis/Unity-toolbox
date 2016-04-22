@@ -5,9 +5,11 @@ namespace Demonixis.Toolbox.VR
     public class CardboardManager : VRManager
     {
         private static CardboardManager _instance = null;
+#if UNITY_ANDROID
         private Cardboard cardboard = null;
+#endif
 
-        #region Singleton
+#region Singleton
 
         public static CardboardManager Instance
         {
@@ -28,7 +30,7 @@ namespace Demonixis.Toolbox.VR
             }
         }
 
-        #endregion
+#endregion
 
         protected override void CheckInstance()
         {
@@ -40,7 +42,7 @@ namespace Demonixis.Toolbox.VR
 
         public override void SetVREnabled(bool isEnabled)
         {
-#if !UNITY_ANDROID
+#if UNITY_ANDROID
             if (UnityEngine.VR.VRDevice.isPresent)
                 return;
 
@@ -53,7 +55,7 @@ namespace Demonixis.Toolbox.VR
 
                     camera.AddComponent<StereoController>();
                     parent.AddComponent<CardboardHead>();
-                    _instance.cardboard = _instance.gameObject.AddComponent<Cardboard>();
+                    cardboard = gameObject.AddComponent<Cardboard>();
                 }
                 else
                     cardboard.VRModeEnabled = true;
@@ -65,7 +67,7 @@ namespace Demonixis.Toolbox.VR
 #endif
         }
 
-        #region Static Methods
+#region Static Methods
 
         public static Vector3 GetLocalPosition(byte viewerIndex)
         {
@@ -100,5 +102,5 @@ namespace Demonixis.Toolbox.VR
         }
     }
 
-    #endregion
+#endregion
 }

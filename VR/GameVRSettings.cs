@@ -70,7 +70,7 @@ namespace Demonixis.Toolbox.VR
 
         public static bool VREnabled
         {
-            get { return CheckVRDevices() != VRDeviceType.None; }
+            get { return GetVRDevice() != VRDeviceType.None; }
         }
 
         public static float RenderScale
@@ -97,17 +97,19 @@ namespace Demonixis.Toolbox.VR
             }
         }
 
-        public static VRDeviceType CheckVRDevices()
+        public static VRDeviceType GetVRDevice()
         {
             if (deviceType == VRDeviceType.None)
             {
+#if UNITY_STANDALONE || UNITY_ANDROID
                 if (UnityVREnabled)
                     deviceType = VRDeviceType.UnityVR;
-#if USE_CARDBOARD_SDK
+#endif
+#if USE_CARDBOARD_SDK && UNITY_ANDROID
                 else if (CardboardEnabled)
                     deviceType = VRDeviceType.Cardboard;
 #endif
-#if USE_OSVR_SDK
+#if USE_OSVR_SDK && UNITY_STANDALONE
                 else if (OSVREnabled)
                     deviceType = VRDeviceType.OSVR;
 #endif
