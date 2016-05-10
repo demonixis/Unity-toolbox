@@ -13,24 +13,24 @@ namespace Demonixis.Toolbox.Controllers
     public sealed class SimpleMouseRotator : MonoBehaviour
     {
         // Caches
-        private Vector3 _targetAngles;
-        private Vector3 _followAngles;
-        private Vector3 _followVelocity;
-        private Quaternion _originalRotation;
-        private Transform _transform;
+        private Vector3 _targetAngles = Vector3.zero;
+        private Vector3 _followAngles = Vector3.zero;
+        private Vector3 _followVelocity = Vector3.zero;
+        private Quaternion _originalRotation = Quaternion.identity;
+        private Transform _transform = null;
         private float _inputH = 0.0f;
         private float _inputV = 0.0f;
 
         [SerializeField]
-        private float _sensibilityX = 0.25f;
+        private float _sensibilityX = 1.0f;
         [SerializeField]
-        private float _sensibilityY = 0.25f;
+        private float _sensibilityY = 1.0f;
         [SerializeField]
-        public Vector2 _rotationRange = new Vector3(180, 70);
+        public Vector2 _rotationRange = new Vector3(180.0f, 70.0f);
         [SerializeField]
-        public float _rotationSpeed = 10;
+        public float _rotationSpeed = 5.0f;
         [SerializeField]
-        public float _damping = 0.2f;
+        public float _damping = 0.1f;
 
         void Start()
         {

@@ -1,4 +1,7 @@
-﻿using InControl;
+﻿#define USE_INCONTROL
+#if USE_INCONTROL
+using InControl;
+#endif
 using UnityEngine;
 
 namespace Demonixis.Toolbox.Controllers
@@ -53,6 +56,7 @@ namespace Demonixis.Toolbox.Controllers
             if (_haltUpdateMovement)
                 return;
 
+#if USE_INCONTROL
             var device = InputManager.ActiveDevice;
             var h = device.LeftStickX;
             var v = device.LeftStickY;
@@ -60,8 +64,29 @@ namespace Demonixis.Toolbox.Controllers
             var moveBack = v < 0;
             var moveLeft = device.DPadLeft.IsPressed || h < 0;
             var moveRight = device.DPadRight.IsPressed || h > 0;
+            var run = device.LeftTrigger.IsPressed || device.RightTrigger.IsPressed;
+            var curHatLeft = device.LeftBumper.IsPressed;
+            var curHatRight = device.RightBumper.IsPressed;
+            var primaryAxis = device.LeftStick.Value;
+            var secondaryAxis = device.RightStick.Value;
+            var jump = device.Action2.WasPressed;
 
-            if (device.Action2.WasPressed)
+#else
+            var h = Input.GetAxis("Horizontal");
+            var v = Input.GetAxis("Vertical");
+            var moveForward = v > 0;
+            var moveBack = v < 0;
+            var moveLeft = h < 0;
+            var moveRight = h > 0;
+            var run = Input.GetButtonDown("Fire 3");
+            var curHatLeft = false;
+            var curHatRight = false;
+            var primaryAxis = Vector2.zero;
+            var secondaryAxis = Vector2.zero;
+            var jump = Input.GetButtonDown("Jump");
+#endif
+
+            if (jump)
                 Jump();
 
             _moveScale = 1.0f;
@@ -72,35 +97,35 @@ namespace Demonixis.Toolbox.Controllers
             _moveScale *= _simulationRate * Time.deltaTime;
 
             // Compute this for key movement
-            float moveInfluence = Acceleration * 0.1f * _moveScale * _moveScaleMultiplier;
+            var moveInfluence = Acceleration * 0.1f * _moveScale * _moveScaleMultiplier;
 
             // Run!
-            if (device.LeftTrigger.IsPressed || device.RightTrigger.IsPressed)
+            if (run)
                 moveInfluence *= 2.5f;
 
-            var ort = _transform.rotation;
-            var ortEuler = ort.eulerAngles;
-            ortEuler.z = ortEuler.x = 0f;
-            ort = Quaternion.Euler(ortEuler);
+            var originalRotation = _transform.rotation;
+            var originalEuler = originalRotation.eulerAngles;
+            originalEuler.z = originalEuler.x = 0f;
+            originalRotation = Quaternion.Euler(originalEuler);
 
             if (moveForward)
-                _moveThrottle += ort * (_transform.lossyScale.z * moveInfluence * Vector3.forward);
-            if (moveBack)
-                _moveThrottle += ort * (_transform.lossyScale.z * moveInfluence * BackAndSideDampen * Vector3.back);
+                _moveThrottle += originalRotation * (_transform.lossyScale.z * moveInfluence * Vector3.forward);
+
+            else if (moveBack)
+                _moveThrottle += originalRotation * (_transform.lossyScale.z * moveInfluence * BackAndSideDampen * Vector3.back);
+
             if (moveLeft)
-                _moveThrottle += ort * (_transform.lossyScale.x * moveInfluence * BackAndSideDampen * Vector3.left);
-            if (moveRight)
-                _moveThrottle += ort * (_transform.lossyScale.x * moveInfluence * BackAndSideDampen * Vector3.right);
+                _moveThrottle += originalRotation * (_transform.lossyScale.x * moveInfluence * BackAndSideDampen * Vector3.left);
+
+            else if (moveRight)
+                _moveThrottle += originalRotation * (_transform.lossyScale.x * moveInfluence * BackAndSideDampen * Vector3.right);
 
             var euler = _transform.rotation.eulerAngles;
-            var curHatLeft = device.LeftBumper.IsPressed;
 
             if (curHatLeft && !_prevHatLeft)
                 euler.y -= RotationRatchet;
 
             _prevHatLeft = curHatLeft;
-
-            var curHatRight = device.RightBumper.IsPressed;
 
             if (curHatRight && !_prevHatRight)
                 euler.y += RotationRatchet;
@@ -111,21 +136,17 @@ namespace Demonixis.Toolbox.Controllers
 
             moveInfluence = _simulationRate * Time.deltaTime * Acceleration * 0.1f * _moveScale * _moveScaleMultiplier;
 
-            var primaryAxis = device.LeftStick.Value;
-
             if (primaryAxis.y > 0.0f)
-                _moveThrottle += ort * (primaryAxis.y * _transform.lossyScale.z * moveInfluence * Vector3.forward);
+                _moveThrottle += originalRotation * (primaryAxis.y * _transform.lossyScale.z * moveInfluence * Vector3.forward);
 
             if (primaryAxis.y < 0.0f)
-                _moveThrottle += ort * (Mathf.Abs(primaryAxis.y) * _transform.lossyScale.z * moveInfluence * BackAndSideDampen * Vector3.back);
+                _moveThrottle += originalRotation * (Mathf.Abs(primaryAxis.y) * _transform.lossyScale.z * moveInfluence * BackAndSideDampen * Vector3.back);
 
             if (primaryAxis.x < 0.0f)
-                _moveThrottle += ort * (Mathf.Abs(primaryAxis.x) * _transform.lossyScale.x * moveInfluence * BackAndSideDampen * Vector3.left);
+                _moveThrottle += originalRotation * (Mathf.Abs(primaryAxis.x) * _transform.lossyScale.x * moveInfluence * BackAndSideDampen * Vector3.left);
 
             if (primaryAxis.x > 0.0f)
-                _moveThrottle += ort * (primaryAxis.x * _transform.lossyScale.x * moveInfluence * BackAndSideDampen * Vector3.right);
-
-            var secondaryAxis = device.RightStick.Value;
+                _moveThrottle += originalRotation * (primaryAxis.x * _transform.lossyScale.x * moveInfluence * BackAndSideDampen * Vector3.right);
 
             euler.y += secondaryAxis.x * rotateInfluence;
 
