@@ -1,6 +1,4 @@
 #if UNITY_EDITOR
-using System.Diagnostics;
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -8,30 +6,19 @@ namespace Demonixis.Toolbox.Editor
 {
     public class BuildManagerEditor : EditorWindow
     {
-        private string _gameName = "EXEC_FILENAME";
-        private string _prefixBuildName = "FOLDERNAME";
-        private string _version = "0.0.0.0";
-        private bool _demo = false;
+        private string _gameName = "GAMENAME";
+        private string _prefixBuildName = "GAMENAME";
+        private string _version = "0.1.1";
 
         private string[] _completeLevels = new string[]
         {
-            "Assets/Scenes/SplashScreen.unity",
-            "Assets/Scenes/Menu.unity",
-            "Assets/Scenes/Loading.unity",
-            "Assets/Scenes/Levels/Level_0/Main_Level_0.unity",
-            "Assets/Scenes/Levels/Level_1/Main_Level_1.unity",
-            "Assets/Scenes/Levels/Level_2/Main_Level_2.unity"
+            "Assets/Scenes/GameScene.unity"
         };
 
         [MenuItem("Demonixis/Build Manager")]
         public static void ShowWindow()
         {
             GetWindow(typeof(BuildManagerEditor));
-        }
-
-        void Start()
-        {
-            _version = GamePrefs.Version;
         }
 
         void OnGUI()
@@ -41,7 +28,6 @@ namespace Demonixis.Toolbox.Editor
             _gameName = EditorGUILayout.TextField("Game Name", _gameName);
             _prefixBuildName = EditorGUILayout.TextField("Prefix Build Name", _prefixBuildName);
             _version = EditorGUILayout.TextField("Version", _version);
-            _demo = EditorGUILayout.Toggle("Demo build", _demo);
 
             GUILayout.Label("Desktop", EditorStyles.boldLabel);
             if (GUILayout.Button("Build"))
@@ -57,10 +43,10 @@ namespace Demonixis.Toolbox.Editor
 
             var buildNames = new string[]
             {
-                _prefixBuildName + "_" + _version + "-windows_x86" + (_demo ? "-SHAREWARE" : ""),
-                _prefixBuildName + "_" + _version + "-windows_x64" + (_demo ? "-SHAREWARE" : ""),
-                _prefixBuildName + "_" + _version + "-linux" + (_demo ? "-SHAREWARE" : ""),
-                _prefixBuildName + "_" + _version + "-mac" + (_demo ? "-SHAREWARE" : "")
+                _prefixBuildName + "_" + _version + "-windows_x86",
+                _prefixBuildName + "_" + _version + "-windows_x64",
+                _prefixBuildName + "_" + _version + "-linux",
+                _prefixBuildName + "_" + _version + "-mac"
             };
 
             // Build Windows x86
