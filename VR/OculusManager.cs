@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.VR;
 
 namespace Demonixis.Toolbox.VR
@@ -7,75 +6,76 @@ namespace Demonixis.Toolbox.VR
     /// <summary>
     /// OculusManager - Manages all aspect of the VR from this singleton.
     /// </summary>
-    public sealed class OculusManager : VRManager
+    public sealed class OculusManager : VRDeviceManager
     {
-        private static string[] AnchorNames = new string[]
-        {
-            "LeftEyeAnchor",
-            "RightEyeAnchor",
-            "TrackerAnchor",
-            "LeftHandAnchor",
-            "RightHandAnchor"
-        };
-
-        private static OculusManager _instance = null;
         private OVRManager ovrManager = null;
 
-        [SerializeField]
-        private bool queueAhead = true;
-        [SerializeField]
-        private OVRManager.TrackingOrigin trackingOriginType = OVRManager.TrackingOrigin.EyeLevel;
-        [SerializeField]
-        private bool usePositionTracking = true;
-        [SerializeField]
-        private bool resetTrackerOnLoad = false;
+        #region Inspector Fields
 
-        #region Singleton
+        [SerializeField]
+        private bool _queueAhead = true;
+        [SerializeField]
+        private OVRManager.TrackingOrigin _trackingOriginType = OVRManager.TrackingOrigin.EyeLevel;
+        [SerializeField]
+        private bool _usePositionTracking = true;
+        [SerializeField]
+        private bool _resetTrackerOnLoad = false;
 
-        public static OculusManager Instance
+        #endregion
+
+        #region Public Fields
+
+        /// <summary>
+        /// Gets or sets the CPU level (Android only)
+        /// </summary>
+        public int CPULevel
         {
-            get
-            {
-                if (_instance == null)
-                {
-                    _instance = FindObjectOfType<OculusManager>();
+            get { return OVRPlugin.cpuLevel; }
+            set { OVRPlugin.cpuLevel = value; }
+        }
 
-                    if (_instance == null)
-                    {
-                        var go = new GameObject("OculusManager");
-                        _instance = go.AddComponent<OculusManager>();
-                    }
-                }
+        /// <summary>
+        /// Gets or sets the GPU level (Android only)
+        /// </summary>
+        public int GPULevel
+        {
+            get { return OVRPlugin.gpuLevel; }
+            set { OVRPlugin.gpuLevel = value; }
+        }
 
-                return _instance;
-            }
+        public override bool IsEnabled
+        {
+            get { return VRSettings.enabled && OVRManager.isHmdPresent; }
+        }
+
+        public override bool IsPresent
+        {
+            get { return  VRDevice.isPresent && OVRManager.isHmdPresent; }
+        }
+
+        public override float RenderScale
+        {
+            get { return VRSettings.renderScale; }
+            set { VRSettings.renderScale = value; }
+        }
+
+        public override VRDeviceType VRDeviceType
+        {
+            get { return VRDeviceType.UnityVR; }
         }
 
         #endregion
 
-        protected override void CheckInstance()
-        {
-            if (_instance != null && _instance != this)
-                Destroy(this);
-            else if (_instance == null)
-                _instance = this;
-        }
-
-        public IEnumerator RecenterView()
-        {
-            yield return new WaitForEndOfFrame();
-            Recenter();
-        }
-
         public override void SetVREnabled(bool isEnabled)
         {
-            if (!VRDevice.isPresent || VRSettings.loadedDevice != VRDeviceType.Oculus)
+            if (!IsPresent)
                 return;
 
 #if UNITY_ANDROID
             if (QualitySettings.vSyncCount != 0)
                 QualitySettings.vSyncCount = 0;
 #endif
+            
             if (isEnabled && ovrManager == null)
             {
                 var camera = Camera.main.GetComponent<Transform>();
@@ -90,23 +90,36 @@ namespace Demonixis.Toolbox.VR
                 head.AddComponent<OVRCameraRig>();
 
                 ovrManager = head.AddComponent<OVRManager>();
-                ovrManager.queueAhead = _instance.queueAhead;
-                ovrManager.trackingOriginType = _instance.trackingOriginType;
-                ovrManager.usePositionTracking = _instance.usePositionTracking;
-                ovrManager.resetTrackerOnLoad = _instance.resetTrackerOnLoad;
+                ovrManager.queueAhead = _queueAhead;
+                ovrManager.trackingOriginType = _trackingOriginType;
+                ovrManager.usePositionTracking = _usePositionTracking;
+                ovrManager.resetTrackerOnLoad = _resetTrackerOnLoad;
             }
+            
+            if (isEnabled)
+                Recenter();
 
-			if (isEnabled)
-				StartCoroutine(RecenterView());
-
-            vrEnabled = isEnabled;
             VRSettings.enabled = isEnabled;
+        }
+
+        public override void Recenter()
+        {
+            InputTracking.Recenter();
         }
 
         private void CreateDefaultStructure(Transform trackingSpace)
         {
-            for (int i = 0, l = AnchorNames.Length; i < l; i++)
-                CreateAnchor(trackingSpace, AnchorNames[i]);
+            var anchorNames = new string[]
+            {
+                "LeftEyeAnchor",
+                "RightEyeAnchor",
+                "TrackerAnchor",
+                "LeftHandAnchor",
+                "RightHandAnchor"
+            };
+
+            for (int i = 0, l = anchorNames.Length; i < l; i++)
+                CreateAnchor(trackingSpace, anchorNames[i]);
         }
 
         private void CreateAnchor(Transform trackingSpace, string name)
@@ -117,43 +130,5 @@ namespace Demonixis.Toolbox.VR
                 anchor.transform.parent = trackingSpace;
             }
         }
-
-        #region Static Methods
-
-        public static Vector3 GetLocalPosition(byte viewerIndex)
-        {
-            return InputTracking.GetLocalPosition((VRNode)viewerIndex);
-        }
-
-        public static Quaternion GetLocalRotation(uint viewerIndex)
-        {
-            return InputTracking.GetLocalRotation((VRNode)viewerIndex);
-        }
-
-        public static void Recenter()
-        {
-            InputTracking.Recenter();
-        }
-
-        public static void SetRenderScale(float scale)
-        {
-            VRSettings.renderScale = scale;
-        }
-
-        public static void SetGPULevel(byte value)
-        {
-#if UNITY_ANDROID
-            OVRPlugin.gpuLevel = value;
-#endif
-        }
-
-        public static void SetCPULevel(byte value)
-        {
-#if UNITY_ANDROID
-            OVRPlugin.cpuLevel = value;
-#endif
-        }
-
-        #endregion
     }
 }

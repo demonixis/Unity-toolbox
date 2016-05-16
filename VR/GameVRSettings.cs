@@ -1,55 +1,101 @@
-﻿#define USE_CARDBOARD_SDK
+﻿#if UNITY_ANDROID
+#define USE_CARDBOARD_SDK
+#endif
+#if UNITY_STANDALONE || UNITY_ANDROID
 #define USE_OSVR_SDK
+#endif
+#if UNITY_STANDALONE
+#define USE_OPENVR_SDK
+#endif
 
+using UnityEngine;
 using UnityEngine.VR;
 
 namespace Demonixis.Toolbox.VR
 {
-    public static class GameVRSettings
+    public enum VRDeviceType
     {
-        public enum VRDeviceType
+        None = 0,
+        Cardboard,
+        UnityVR,
+        OSVR
+    }
+
+    public sealed class GameVRSettings : MonoBehaviour
+    {
+        private static VRDeviceManager activeManager = null;
+        private bool _vrChecked = false;
+
+        void Awake()
         {
-            None = 0,
-            Cardboard,
-            UnityVR,
-            OSVR
+            GetVRDevice();
         }
 
-        private static VRDeviceType deviceType = VRDeviceType.None;
-        private static bool cardboardEnabled = false;
-
-        public static bool UnityVREnabled
+        /// <summary>
+        /// Gets the type of VR device currently connected. It takes the first VR device which have the higher priority.
+        /// </summary>
+        /// <param name="forceCheck">Set to true to force the check.</param>
+        /// <returns></returns>
+        public VRDeviceType GetVRDevice(bool forceCheck = false)
         {
-            get { return VRDevice.isPresent && VRSettings.enabled; }
-            set
+            if (_vrChecked && !forceCheck)
+                return activeManager != null ? activeManager.VRDeviceType : VRDeviceType.None;
+
+            // Gets all managers and enable only the first connected device.
+            var vrManagers = GetComponents<VRDeviceManager>();
+            var count = vrManagers.Length;
+            var deviceType = VRDeviceType.None;
+
+            activeManager = null;
+
+            if (count > 0)
             {
-                if (VRDevice.isPresent)
-                    VRSettings.enabled = value;
+                System.Array.Sort<VRDeviceManager>(vrManagers);
+
+                for (var i = 0; i < count; i++)
+                {
+                    if (vrManagers[i].IsPresent && deviceType == VRDeviceType.None)
+                    {
+                        activeManager = vrManagers[i];
+                        continue;
+                    }
+
+                    vrManagers[i].enabled = false;
+                }
             }
+
+            return deviceType;
         }
 
+        #region Static Fields
+
+        /// <summary>
+        /// Gets the active VR Device Manager.
+        /// </summary>
+        public static VRDeviceManager ActiveManager
+        {
+            get { return activeManager; }
+        }
+
+        /// <summary>
+        /// Indicates if Cardboard is enabled.
+        /// </summary>
         public static bool CardboardEnabled
-        {
-            get { return cardboardEnabled; }
-            set
-            {
-                if (CardboardSupported)
-                    cardboardEnabled = value;
-            }
-        }
-
-        public static bool CardboardSupported
         {
             get
             {
-#if UNITY_EDITOR
-                return true;
-#else
-                return UnityEngine.SystemInfo.supportsGyroscope;
+#if USE_CARDBOARD_SDK
+                var cardboard = Cardboard.SDK;
+                if (cardboard != null && cardboard.VRModeEnabled)
+                    return true;
 #endif
+                return false;
             }
         }
 
+        /// <summary>
+        /// Indicates if OSVR is enabled.
+        /// </summary>
         public static bool OSVREnabled
         {
             get
@@ -68,68 +114,80 @@ namespace Demonixis.Toolbox.VR
             }
         }
 
-        public static bool VREnabled
+        /// <summary>
+        /// Indicates if OpenVR is enabled.
+        /// </summary>
+        public static bool OpenVREnabled
         {
-            get { return GetVRDevice() != VRDeviceType.None; }
+            get
+            {
+#if USE_OPENVR_SDK
+                return Valve.VR.OpenVR.IsHmdPresent();
+#else
+
+                return false;
+#endif
+            }
         }
 
+        /// <summary>
+        /// Recenter the view of the active manager.
+        /// </summary>
+        public static void Recenter()
+        {
+            if (activeManager != null)
+                activeManager.Recenter();
+        }
+
+        /// <summary>
+        /// Gets or sets the render scale.
+        /// </summary>
         public static float RenderScale
         {
             get
             {
-                if (deviceType == VRDeviceType.UnityVR)
-                    return VRSettings.renderScale;
-#if USE_CARDBOARD_SDK
-                else if (deviceType == VRDeviceType.Cardboard)
-                    return Cardboard.SDK.StereoScreenScale;
-#endif
+                if (activeManager == null)
+                    return 1.0f;
 
-                return 1.0f;
+                return activeManager.RenderScale;
             }
             set
             {
-                if (deviceType == VRDeviceType.UnityVR)
-                    VRSettings.renderScale = value;
-#if USE_CARDBOARD_SDK
-                else if (deviceType == VRDeviceType.Cardboard)
-                    Cardboard.SDK.StereoScreenScale = value;
-#endif
+                if (activeManager != null)
+                    activeManager.RenderScale = value;
             }
         }
 
-        public static VRDeviceType GetVRDevice()
+        /// <summary>
+        /// Indicates if UnityEngine.VR is enabled.
+        /// If a device is connected, it'll return true for PSVR, Oculus and OpenVR.
+        /// </summary>
+        public static bool UnityVREnabled
         {
-            if (deviceType == VRDeviceType.None)
+            get { return VRDevice.isPresent && VRSettings.enabled; }
+            set
             {
-#if UNITY_STANDALONE || UNITY_ANDROID
-                if (UnityVREnabled)
-                    deviceType = VRDeviceType.UnityVR;
-#endif
-#if USE_CARDBOARD_SDK && UNITY_ANDROID
-                else if (CardboardEnabled)
-                    deviceType = VRDeviceType.Cardboard;
-#endif
-#if USE_OSVR_SDK && UNITY_STANDALONE
-                else if (OSVREnabled)
-                    deviceType = VRDeviceType.OSVR;
-#endif
+                if (VRDevice.isPresent)
+                    VRSettings.enabled = value;
             }
-
-            return deviceType;
         }
 
-        public static void Recenter()
+        /// <summary>
+        /// Indicates if the VR mode is enabled.
+        /// </summary>
+        public static bool VREnabled
         {
-            if (deviceType == GameVRSettings.VRDeviceType.UnityVR)
-                InputTracking.Recenter();
-#if USE_CARDBOARD_SDK
-            else if (deviceType == GameVRSettings.VRDeviceType.Cardboard)
-                Cardboard.SDK.Recenter();
-#endif
-#if USE_OSVR_SDK
-            else if (deviceType == GameVRSettings.VRDeviceType.OSVR)
-                OsvrManager.Recenter();
-#endif
+            get { return activeManager != null; }
         }
+
+        /// <summary>
+        /// Gets the type of VR device.
+        /// </summary>
+        public static VRDeviceType VRDeviceType
+        {
+            get { return activeManager != null ? activeManager.VRDeviceType : VRDeviceType.None; }
+        }
+
+        #endregion
     }
 }

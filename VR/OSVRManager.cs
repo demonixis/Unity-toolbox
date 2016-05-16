@@ -1,5 +1,4 @@
 ﻿using OSVR.Unity;
-using System.Collections;
 using UnityEngine;
 
 namespace Demonixis.Toolbox.VR
@@ -7,36 +6,37 @@ namespace Demonixis.Toolbox.VR
     /// <summary>
     /// OsvrManager - Manages all aspect of the VR from this singleton.
     /// </summary>
-    public sealed class OsvrManager : VRManager
+    public sealed class OSVRManager : VRDeviceManager
     {
-        private static OsvrManager _instance = null;
         private DisplayController displayController;
 
-        [SerializeField]
-        private bool showDirectModePreview = true;
+        public override bool IsEnabled
+        {
+            get { return displayController != null; }
+        }
 
-        #region Singleton
-
-        public static OsvrManager Instance
+        public override bool IsPresent
         {
             get
             {
-                if (_instance == null)
-                {
-                    _instance = FindObjectOfType<OsvrManager>();
-
-                    if (_instance == null)
-                    {
-                        var go = new GameObject("OsvrManager");
-                        _instance = go.AddComponent<OsvrManager>();
-                    }
-                }
-
-                return _instance;
+                var clientKit = ClientKit.instance;
+                return clientKit != null && clientKit.context != null && clientKit.context.CheckStatus();
             }
         }
 
-        #endregion
+        public override VRDeviceType VRDeviceType
+        {
+            get { return VRDeviceType.OSVR; }
+        }
+
+        public override float RenderScale
+        {
+            get { return 1.0f; }
+            set { }
+        }
+
+        [SerializeField]
+        private bool showDirectModePreview = true;
 
 #if UNITY_EDITOR
         void Update()
@@ -46,86 +46,9 @@ namespace Demonixis.Toolbox.VR
         }
 #endif
 
-        protected override void CheckInstance()
-        {
-            if (_instance != null && _instance != this)
-                Destroy(this);
-            else if (_instance == null)
-                _instance = this;
-        }
-
-        public IEnumerator RecenterView()
-        {
-            yield return new WaitForEndOfFrame();
-            Recenter();
-        }
-
-        public void SetIPD(float ipd)
-        {
-            var displayController = Instance.displayController;
-
-            if (displayController != null && displayController.UseRenderManager)
-                displayController.RenderManager.SetIPDMeters(ipd);
-        }
-
-        public override void SetVREnabled(bool isEnabled)
+        public override void Recenter()
         {
             var clientKit = ClientKit.instance;
-            var camera = Camera.main;
-
-            if (camera != null && clientKit != null && clientKit.context != null && clientKit.context.CheckStatus())
-            {
-                if (isEnabled)
-                {
-                    displayController = camera.transform.parent.gameObject.AddComponent<DisplayController>();
-                    displayController.showDirectModePreview = _instance.showDirectModePreview;
-                    camera.gameObject.AddComponent<VRViewer>();
-                    StartCoroutine(RecenterView());
-                }
-                else
-                {
-                    Destroy(_instance.displayController);
-
-                    var viewers = FindObjectsOfType<VRViewer>();
-                    for (int i = 0; i < viewers.Length; i++)
-                        Destroy(viewers[i]);
-                }
-
-                vrEnabled = isEnabled;
-            }
-        }
-
-        #region Static Methods
-
-        public static Vector3 GetLocalPosition(byte viewerIndex)
-        {
-            var displayController = Instance.displayController;
-            if (displayController != null && displayController.DisplayConfig != null)
-            {
-                var pose3 = displayController.DisplayConfig.GetViewerPose(viewerIndex);
-                return new Vector3((float)pose3.translation.x, (float)pose3.translation.y, (float)pose3.translation.z);
-            }
-
-            return Vector3.zero;
-        }
-
-        public static Quaternion GetLocalRotation(uint viewerIndex)
-        {
-            var displayController = Instance.displayController;
-            if (displayController != null && displayController.DisplayConfig != null)
-            {
-                var pose3 = displayController.DisplayConfig.GetViewerPose(viewerIndex);
-                return new Quaternion((float)pose3.rotation.x, (float)pose3.rotation.y, (float)pose3.rotation.z, (float)pose3.rotation.w);
-            }
-
-            return Quaternion.identity;
-        }
-
-        public static void Recenter()
-        {
-            var manager = Instance;
-            var clientKit = ClientKit.instance;
-            var displayController = manager.displayController;
 
             if (displayController != null && clientKit != null)
             {
@@ -136,17 +59,38 @@ namespace Demonixis.Toolbox.VR
             }
         }
 
-        public static bool IsServerConnected()
+        public void SetIPD(float ipd)
         {
+            if (displayController != null && displayController.UseRenderManager)
+                displayController.RenderManager.SetIPDMeters(ipd);
+        }
+
+        public override void SetVREnabled(bool isEnabled)
+        {
+            if (!IsPresent)
+                return;
+
             var clientKit = ClientKit.instance;
-            return clientKit != null && clientKit.context != null && clientKit.context.CheckStatus();
-        }
+            var camera = Camera.main;
 
-        public static void SetRenderScale(float scale)
-        {
-            Debug.Log("[OsvrManager] SetRenderScale not yet supported");
-        }
+            if (camera != null && clientKit != null && clientKit.context != null && clientKit.context.CheckStatus())
+            {
+                if (isEnabled)
+                {
+                    displayController = camera.transform.parent.gameObject.AddComponent<DisplayController>();
+                    displayController.showDirectModePreview = showDirectModePreview;
+                    camera.gameObject.AddComponent<VRViewer>();
+                    Recenter();
+                }
+                else
+                {
+                    Destroy(displayController);
 
-        #endregion
+                    var viewers = FindObjectsOfType<VRViewer>();
+                    for (int i = 0; i < viewers.Length; i++)
+                        Destroy(viewers[i]);
+                }
+            }
+        }
     }
 }

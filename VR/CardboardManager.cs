@@ -2,105 +2,77 @@
 
 namespace Demonixis.Toolbox.VR
 {
-    public class CardboardManager : VRManager
+    public class CardboardManager : VRDeviceManager
     {
-        private static CardboardManager _instance = null;
-#if UNITY_ANDROID
         private Cardboard cardboard = null;
-#endif
 
-#region Singleton
+        #region Public Fields
 
-        public static CardboardManager Instance
+        public override bool IsEnabled
+        {
+            get { return cardboard != null ? cardboard.VRModeEnabled : false; }
+        }
+
+        public static bool IsSupported
         {
             get
             {
-                if (_instance == null)
-                {
-                    _instance = FindObjectOfType<CardboardManager>();
-
-                    if (_instance == null)
-                    {
-                        var go = new GameObject("CardboardManager");
-                        _instance = go.AddComponent<CardboardManager>();
-                    }
-                }
-
-                return _instance;
+#if UNITY_EDITOR
+                return true;
+#else
+                return UnityEngine.SystemInfo.supportsGyroscope;
+#endif
             }
         }
 
-#endregion
-
-        protected override void CheckInstance()
+        public override bool IsPresent
         {
-            if (_instance != null && _instance != this)
-                Destroy(this);
-            else if (_instance == null)
-                _instance = this;
+            get
+            {
+#if UNITY_ANDROID
+                return !UnityEngine.VR.VRDevice.isPresent && IsSupported;
+#else
+                return false;
+#endif
+            }
         }
+
+        public override float RenderScale
+        {
+            get { return Cardboard.SDK.StereoScreenScale; }
+            set { Cardboard.SDK.StereoScreenScale = value; }
+        }
+
+        public override VRDeviceType VRDeviceType
+        {
+            get { return VRDeviceType.Cardboard; }
+        }
+
+        #endregion
 
         public override void SetVREnabled(bool isEnabled)
         {
-#if UNITY_ANDROID
-            if (UnityEngine.VR.VRDevice.isPresent)
+            if (!IsPresent)
                 return;
 
-            if (isEnabled)
+            if (cardboard == null)
             {
-                if (cardboard == null)
-                {
-                    var camera = Camera.main.gameObject;
-                    var parent = camera.transform.parent.gameObject;
+                var camera = Camera.main.gameObject;
+                var parent = camera.transform.parent.gameObject;
 
-                    camera.AddComponent<StereoController>();
-                    parent.AddComponent<CardboardHead>();
-                    cardboard = gameObject.AddComponent<Cardboard>();
-                }
-                else
-                    cardboard.VRModeEnabled = true;
+                camera.AddComponent<StereoController>();
+                parent.AddComponent<CardboardHead>();
+                cardboard = gameObject.AddComponent<Cardboard>();
             }
-            else if (cardboard != null)
-                cardboard.VRModeEnabled = false;
 
-            vrEnabled = isEnabled;
-#endif
+            cardboard.VRModeEnabled = isEnabled;
         }
 
-#region Static Methods
-
-        public static Vector3 GetLocalPosition(byte viewerIndex)
-        {
-#if UNITY_ANDROID
-            return Cardboard.SDK.HeadPose.Position;
-#else
-            return Vector3.zero;
-#endif
-        }
-
-        public static Quaternion GetLocalRotation(uint viewerIndex)
-        {
-#if UNITY_ANDROID
-            return Cardboard.SDK.HeadPose.Orientation;
-#else
-            return Quaternion.identity;
-#endif
-        }
-
-        public static void Recenter()
+        public override void Recenter()
         {
 #if UNITY_ANDROID
             Cardboard.SDK.Recenter();
 #endif
         }
-
-        public static void SetRenderScale(float scale)
-        {
-#if UNITY_ANDROID
-            Cardboard.SDK.StereoScreenScale = scale;
-#endif
-        }
     }
-
-#endregion
 }

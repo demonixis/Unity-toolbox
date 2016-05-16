@@ -1,4 +1,5 @@
-﻿#define USE_DOT_TWEEN_
+﻿#define USE_DOT_TWEEN
+#define USE_INCONTROL
 using Demonixis.Toolbox.Utils;
 #if USE_DOT_TWEEN
 using DG.Tweening;
@@ -58,13 +59,27 @@ namespace Demonixis.Toolbox.VR
 
             if (_selected != null)
             {
-                if (Input.GetButtonDown("Fire1"))
+                if (IsValidate())
                     Click(_selected.gameObject);
                 else if (_eventSystem.currentSelectedGameObject != _selected.gameObject)
                     SelectGameObject(_selected.gameObject);
             }
             else if (_eventSystem.currentSelectedGameObject != null)
                 SelectGameObject(null);
+        }
+
+        private bool IsValidate()
+        {
+#if USE_INCONTROL
+            var device = InControl.InputManager.ActiveDevice;
+
+            return device.Action1.WasPressed || device.Action3.WasPressed;
+#else
+            return Input.GetKeyDown(KeyCode.Return) ||
+                Input.GetKeyDown(KeyCode.Space) ||
+                Input.GetButtonDown("Fire1") ||
+                Input.GetButtonDown("Jump");
+#endif
         }
 
         private void Click(GameObject selected)
