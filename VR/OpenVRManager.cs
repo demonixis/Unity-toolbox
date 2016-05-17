@@ -67,26 +67,26 @@ namespace Demonixis.Toolbox.VR
                 var playerObject = GameObject.FindWithTag("Player");
                 var camera = Camera.main.transform;
                 var trackingSpace = camera.parent;
+                var head = trackingSpace != null ? trackingSpace.parent : trackingSpace;
 
-                if (playerObject == null || trackingSpace == null || trackingSpace.parent == null)
+                if (playerObject == null || trackingSpace == null)
                     throw new UnityException("[OpenVRManager] Your prefab doesn't respect the correct hierarchy");
-
 
                 // Creates the SteamVR's main camera.
                 steamCamera = camera.gameObject.AddComponent<SteamVR_Camera>();
 
                 // The controllers.
-                var controllerObject = new GameObject("SteamVR_Controllers");
-                var controllerTransform = controllerObject.transform;
-                controllerTransform.parent = playerObject.transform;
+                var controllerGameObject = new GameObject("SteamVR_Controllers");
+                var controllerTransform = controllerGameObject.transform;
+                controllerTransform.parent = head;
                 controllerTransform.localPosition = Vector3.zero;
                 controllerTransform.localRotation = Quaternion.identity;
                 // We need to disable the gameobject because the SteamVR_ControllerManager component
                 // Will check attached controllers in the awake method.
                 // Here we don't have attached controllers yet.
-                controllerObject.SetActive(false);
+                controllerGameObject.SetActive(false);
 
-                var controllerManager = controllerObject.AddComponent<SteamVR_ControllerManager>();
+                var controllerManager = controllerGameObject.AddComponent<SteamVR_ControllerManager>();
                 controllerManager.left = CreateController(controllerManager.transform, "Controller (left)");
                 controllerManager.right = CreateController(controllerManager.transform, "Controller (right)");
 
@@ -98,7 +98,7 @@ namespace Demonixis.Toolbox.VR
                 }
 
                 // Now that controllers are attached, we can enable the GameObject
-                controllerObject.SetActive(true);
+                controllerGameObject.SetActive(true);
 
                 // And finally the play area.
                 if (_addPlayArea)
@@ -160,15 +160,15 @@ namespace Demonixis.Toolbox.VR
             if (_fixHeadPosition)
             {
                 var headPosition = head.localPosition;
-                var camPosition = mainCamera.localPosition;
+                var camPosition = steamCamera.transform.localPosition;
                 headPosition.y -= camPosition.y;
                 head.localPosition = headPosition;
             }
 
             if (_fixHeadRotation)
             {
-                var camRotation = mainCamera.localRotation.eulerAngles;
                 var headRotation = head.localRotation.eulerAngles;
+                var camRotation = steamCamera.transform.eulerAngles;
                 headRotation.y -= camRotation.y;
                 head.localRotation = Quaternion.Euler(headRotation);
             }
