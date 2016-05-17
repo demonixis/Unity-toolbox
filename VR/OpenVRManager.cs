@@ -12,7 +12,6 @@ namespace Demonixis.Toolbox.VR
     public sealed class OpenVRManager : VRDeviceManager
     {
         private SteamVR_Camera steamCamera = null;
-        private SteamVR_ControllerManager controllerManager = null;
 
         #region Inspector Fields
 
@@ -57,53 +56,55 @@ namespace Demonixis.Toolbox.VR
             if (!IsPresent)
                 return;
 
+            // /!\ You have to change one line in SteamVR_Camera.cs
+            // var camera = head.GetComponent<Camera>();
+            // become
+            // var camera = head.gameObject.AddComponent<Camera>();
+            // Because the head is just created and no scripts are attached to it.
+
             if (steamCamera == null)
             {
                 var playerObject = GameObject.FindWithTag("Player");
-                var camera = Camera.main.GetComponent<Transform>();
+                var camera = Camera.main.transform;
                 var trackingSpace = camera.parent;
 
                 if (playerObject == null || trackingSpace == null || trackingSpace.parent == null)
                     throw new UnityException("[OpenVRManager] Your prefab doesn't respect the correct hierarchy");
 
-                // The controllers.
-                controllerManager = playerObject.AddComponent<SteamVR_ControllerManager>();
-
-                // Creates the SteamVR's head
-                /* Not sure if it's required because it works without that...
-                var headCam = trackingSpace.gameObject.AddComponent<Camera>();
-                headCam.clearFlags = CameraClearFlags.Nothing;
-                headCam.cullingMask = 0;
-                headCam.orthographic = true;
-                headCam.orthographicSize = 1.0f;
-                headCam.depth = 0.0f;
-                headCam.useOcclusionCulling = false;
-                headCam.hdr = false;
-
-                var headTrackedObject = trackingSpace.gameObject.AddComponent<SteamVR_TrackedObject>();
-                headTrackedObject.index = SteamVR_TrackedObject.EIndex.Hmd;
-                */
 
                 // Creates the SteamVR's main camera.
                 steamCamera = camera.gameObject.AddComponent<SteamVR_Camera>();
 
-                var player = playerObject.GetComponent<Transform>();
-                controllerManager.left = CreateController(player, "Controller (left)", SteamVR_TrackedObject.EIndex.Device1);
-                controllerManager.right = CreateController(player, "Controller (right)", SteamVR_TrackedObject.EIndex.Device2);
+                // The controllers.
+                var controllerObject = new GameObject("SteamVR_Controllers");
+                var controllerTransform = controllerObject.transform;
+                controllerTransform.parent = playerObject.transform;
+                controllerTransform.localPosition = Vector3.zero;
+                controllerTransform.localRotation = Quaternion.identity;
+                // We need to disable the gameobject because the SteamVR_ControllerManager component
+                // Will check attached controllers in the awake method.
+                // Here we don't have attached controllers yet.
+                controllerObject.SetActive(false);
+
+                var controllerManager = controllerObject.AddComponent<SteamVR_ControllerManager>();
+                controllerManager.left = CreateController(controllerManager.transform, "Controller (left)");
+                controllerManager.right = CreateController(controllerManager.transform, "Controller (right)");
 
                 // The controllers' model.
                 if (_addModelControllers)
                 {
-                    CreateControllerModel(controllerManager.left.transform, SteamVR_TrackedObject.EIndex.Device1);
-                    CreateControllerModel(controllerManager.right.transform, SteamVR_TrackedObject.EIndex.Device2);
+                    CreateControllerModel(controllerManager.left.transform);
+                    CreateControllerModel(controllerManager.right.transform);
                 }
+
+                // Now that controllers are attached, we can enable the GameObject
+                controllerObject.SetActive(true);
 
                 // And finally the play area.
                 if (_addPlayArea)
                 {
                     var playArea = new GameObject("SteamVR_PlayArea");
-                    playArea.transform.parent = player;
-
+                    playArea.transform.parent = playerObject.transform;
                     playArea.AddComponent<MeshRenderer>();
                     playArea.AddComponent<MeshFilter>();
                     playArea.AddComponent<SteamVR_PlayArea>();
@@ -123,7 +124,7 @@ namespace Demonixis.Toolbox.VR
             InputTracking.Recenter();
         }
 
-        private GameObject CreateController(Transform parent, string name, SteamVR_TrackedObject.EIndex index)
+        private GameObject CreateController(Transform parent, string name)
         {
             if (!parent.Find(name))
             {
@@ -131,14 +132,14 @@ namespace Demonixis.Toolbox.VR
                 anchor.transform.parent = parent;
 
                 var controller = anchor.AddComponent<SteamVR_TrackedObject>();
-                controller.index = index;
+                controller.index = SteamVR_TrackedObject.EIndex.None;
                 return anchor;
             }
 
             return null;
         }
 
-        private GameObject CreateControllerModel(Transform parent, SteamVR_TrackedObject.EIndex index)
+        private GameObject CreateControllerModel(Transform parent)
         {
             if (parent.GetComponentInChildren<SteamVR_RenderModel>() == null)
             {
@@ -146,7 +147,7 @@ namespace Demonixis.Toolbox.VR
                 model.transform.parent = parent;
 
                 var renderModel = model.AddComponent<SteamVR_RenderModel>();
-                renderModel.index = index;
+                renderModel.index = SteamVR_TrackedObject.EIndex.None;
             }
 
             return null;

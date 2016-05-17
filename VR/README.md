@@ -27,6 +27,16 @@ If you don't want to use a specific SDK, just remove the adapted `define` in `Ga
 - `USE_OSVR_SDK`
 - `USE_OPENVR_SDK`
 
+### About OpenVR
+
+There is a small bug in the SteamVR plugin, you have to manually change a line in `SteamVR_Camera.cs`
+```CSharp
+// SteamVR_Camera.cs line 184
+var camera = head.GetComponent<Camera>();
+// Become
+var camera = head.gameObject.AddComponent<Camera>();
+```
+
 ## Using it
 
 ```csharp
