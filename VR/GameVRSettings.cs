@@ -3,6 +3,7 @@
 #endif
 #if UNITY_STANDALONE || UNITY_ANDROID
 #define USE_OSVR_SDK
+#define USE_OVR_SDK
 #endif
 #if UNITY_STANDALONE
 #define USE_OPENVR_SDK
@@ -94,6 +95,21 @@ namespace Demonixis.Toolbox.VR
         }
 
         /// <summary>
+        /// Indicates if Oculus Rift/GearVR is enabled.
+        /// </summary>
+        public static bool OculusEnabled
+        {
+            get
+            {
+#if USE_OVR_SDK
+                return VRSettings.enabled && OVRManager.isHmdPresent;
+#else
+                return false;
+#endif
+            }
+        }
+
+        /// <summary>
         /// Indicates if OSVR is enabled.
         /// </summary>
         public static bool OSVREnabled
@@ -122,7 +138,7 @@ namespace Demonixis.Toolbox.VR
             get
             {
 #if USE_OPENVR_SDK
-                return Valve.VR.OpenVR.IsHmdPresent();
+                return VRSettings.enabled && Valve.VR.OpenVR.IsHmdPresent();
 #else
 
                 return false;
