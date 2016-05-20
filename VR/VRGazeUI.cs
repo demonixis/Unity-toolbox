@@ -16,7 +16,7 @@ namespace Demonixis.Toolbox.VR
     /// Display a crosshair in a world space canvas and use it to interact with the UI.
     /// </summary>
     [RequireComponent(typeof(Image))]
-    public sealed class VRGazeUI : MonoBehaviour
+    public class VRGazeUI : MonoBehaviour
     {
         private List<RaycastResult> _raycasts = null;
         private PointerEventData _pointer = null;
@@ -59,7 +59,7 @@ namespace Demonixis.Toolbox.VR
 
             if (_selected != null)
             {
-                if (IsValidate())
+                if (IsActionDown())
                     Click(_selected.gameObject);
                 else if (_eventSystem.currentSelectedGameObject != _selected.gameObject)
                     SelectGameObject(_selected.gameObject);
@@ -68,7 +68,7 @@ namespace Demonixis.Toolbox.VR
                 SelectGameObject(null);
         }
 
-        private bool IsValidate()
+        protected virtual bool IsActionDown()
         {
 #if USE_INCONTROL
             var device = InControl.InputManager.ActiveDevice;
@@ -123,7 +123,11 @@ namespace Demonixis.Toolbox.VR
         private IEnumerator InitializePointer()
         {
             yield return new WaitForEndOfFrame();
+            InitializeGazeUI();
+        }
 
+        protected virtual void InitializeGazeUI()
+        {
             var scaling = GameVRSettings.RenderScale;
             var screenCenter = new Vector2(Screen.width * 0.5f * scaling, Screen.height * 0.5f * scaling);
 

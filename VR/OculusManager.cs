@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.VR;
 
 namespace Demonixis.Toolbox.VR
@@ -65,6 +66,11 @@ namespace Demonixis.Toolbox.VR
         }
 
         #endregion
+
+        public override void Dispose()
+        {
+            Destroy(this);
+        }
 
         public override void SetVREnabled(bool isEnabled)
         {

@@ -58,10 +58,12 @@ namespace Demonixis.Toolbox.VR
                     if (vrManagers[i].IsPresent && deviceType == VRDeviceType.None)
                     {
                         activeManager = vrManagers[i];
+                        activeManager.SetVREnabled(true);
+                        deviceType = activeManager.VRDeviceType;
                         continue;
                     }
 
-                    vrManagers[i].enabled = false;
+                    vrManagers[i].Dispose();
                 }
             }
 

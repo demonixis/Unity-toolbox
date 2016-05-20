@@ -11,8 +11,6 @@ namespace Demonixis.Toolbox.VR
     public abstract class VRDeviceManager : MonoBehaviour, IComparable
     {
         [SerializeField]
-        protected bool m_startInVR = true;
-        [SerializeField]
         protected int m_priority = 0;
 
         /// <summary>
@@ -46,11 +44,10 @@ namespace Demonixis.Toolbox.VR
             get; set;
         }
 
-        protected virtual void Start()
-        {
-            if (m_startInVR)
-                SetVREnabled(true);
-        }
+        /// <summary>
+        /// Stops the VR device and destroy the component.
+        /// </summary>
+        public abstract void Dispose();
 
         /// <summary>
         /// Enable or disable the VR Mode for the device.

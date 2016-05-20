@@ -1,5 +1,8 @@
 ﻿using OSVR.Unity;
 using UnityEngine;
+using UnityEngine.VR;
+using Demonixis.Toolbox.Utils;
+using System.Collections;
 
 namespace Demonixis.Toolbox.VR
 {
@@ -8,7 +11,11 @@ namespace Demonixis.Toolbox.VR
     /// </summary>
     public sealed class OSVRManager : VRDeviceManager
     {
+        private bool _unityVRWasEnabled = false;
         private DisplayController displayController;
+
+        [SerializeField]
+        private string[] _typeToCopyToEyes = null;
 
         public override bool IsEnabled
         {
@@ -46,6 +53,17 @@ namespace Demonixis.Toolbox.VR
         }
 #endif
 
+        public override void Dispose()
+        {
+            if (displayController != null)
+            {
+                SetVREnabled(false);
+                VRSettings.enabled = _unityVRWasEnabled;
+            }
+
+            Destroy(this);
+        }
+
         public override void Recenter()
         {
             var clientKit = ClientKit.instance;
@@ -70,27 +88,84 @@ namespace Demonixis.Toolbox.VR
             if (!IsPresent)
                 return;
 
+            _unityVRWasEnabled = VRSettings.enabled;
+            VRSettings.enabled = false;
+
             var clientKit = ClientKit.instance;
             var camera = Camera.main;
 
             if (camera != null && clientKit != null && clientKit.context != null && clientKit.context.CheckStatus())
             {
-                if (isEnabled)
+                if (isEnabled && displayController == null)
                 {
                     displayController = camera.transform.parent.gameObject.AddComponent<DisplayController>();
                     displayController.showDirectModePreview = showDirectModePreview;
                     camera.gameObject.AddComponent<VRViewer>();
+
+                    if (_typeToCopyToEyes != null)
+                        StartCoroutine(CopyComponentsToEyes());
+
                     Recenter();
                 }
-                else
+                else if (displayController != null)
                 {
                     Destroy(displayController);
-
-                    var viewers = FindObjectsOfType<VRViewer>();
-                    for (int i = 0; i < viewers.Length; i++)
-                        Destroy(viewers[i]);
+                    Destroy<VREye>();
+                    Destroy<VRSurface>();
+                    Destroy<VRViewer>();
+                    Destroy<OsvrRenderManager>(false);
+                    displayController = null;
                 }
             }
+        }
+
+        private IEnumerator CopyComponentsToEyes()
+        {
+            yield return new WaitForEndOfFrame();
+
+            Component component = null;
+
+            var camera = Camera.main.transform;
+            var eyes = camera.parent.GetComponentsInChildren<VRSurface>(true);
+            var eyesCount = eyes.Length;
+
+            for (int i = 0, l = _typeToCopyToEyes.Length; i < l; i++)
+            {
+                component = camera.GetComponent(_typeToCopyToEyes[i]);
+
+                if (component != null)
+                {
+                    for (int j = 0; j < eyesCount; j++)
+                    {
+                        if (CopyComponent(component, eyes[j].gameObject) != null)
+                            Destroy(component);
+                    }
+                }
+            }
+        }
+
+        private Component CopyComponent(Component component, GameObject destination)
+        {
+            var type = component.GetType();
+            var copy = destination.AddComponent(type);
+            var fields = type.GetFields();
+
+            for (int i = 0, l = fields.Length; i < l; i++)
+                fields[i].SetValue(copy, fields[i].GetValue(component));
+
+            return copy;
+        }
+
+        private void Destroy<T>(bool multiple = true) where T : MonoBehaviour
+        {
+            if (multiple)
+            {
+                var scripts = FindObjectsOfType<T>();
+                for (int i = 0; i < scripts.Length; i++)
+                    Destroy(scripts[i]);
+            }
+            else
+                Destroy(FindObjectOfType<T>());
         }
     }
 }
