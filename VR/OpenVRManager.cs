@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.VR;
 using Valve.VR;
@@ -95,13 +94,6 @@ namespace Demonixis.Toolbox.VR
                 controllerManager.left = CreateController(controllerManager.transform, "Controller (left)");
                 controllerManager.right = CreateController(controllerManager.transform, "Controller (right)");
 
-                // The controllers' model.
-                if (_addModelControllers)
-                {
-                    CreateControllerModel(controllerManager.left.transform);
-                    CreateControllerModel(controllerManager.right.transform);
-                }
-
                 // Now that controllers are attached, we can enable the GameObject
                 controllerGameObject.SetActive(true);
 
@@ -133,26 +125,22 @@ namespace Demonixis.Toolbox.VR
         {
             if (!parent.Find(name))
             {
-                var anchor = new GameObject(name);
-                anchor.transform.parent = parent;
+                var node = new GameObject(name);
+                node.transform.parent = parent;
 
-                var controller = anchor.AddComponent<SteamVR_TrackedObject>();
-                controller.index = SteamVR_TrackedObject.EIndex.None;
-                return anchor;
-            }
+                var trackedObject = node.AddComponent<SteamVR_TrackedObject>();
+                trackedObject.index = SteamVR_TrackedObject.EIndex.None;
 
-            return null;
-        }
+                if (_addModelControllers)
+                {
+                    var model = new GameObject("Model");
+                    model.transform.parent = node.transform;
 
-        private GameObject CreateControllerModel(Transform parent)
-        {
-            if (parent.GetComponentInChildren<SteamVR_RenderModel>() == null)
-            {
-                var model = new GameObject("Model");
-                model.transform.parent = parent;
+                    var renderModel = model.AddComponent<SteamVR_RenderModel>();
+                    renderModel.index = SteamVR_TrackedObject.EIndex.None;
+                }
 
-                var renderModel = model.AddComponent<SteamVR_RenderModel>();
-                renderModel.index = SteamVR_TrackedObject.EIndex.None;
+                return node;
             }
 
             return null;

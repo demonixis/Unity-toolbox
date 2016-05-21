@@ -59,6 +59,7 @@ namespace Demonixis.Toolbox.VR
 
             if (_selected != null)
             {
+                Debug.Log(_selected.name);
                 if (IsActionDown())
                     Click(_selected.gameObject);
                 else if (_eventSystem.currentSelectedGameObject != _selected.gameObject)

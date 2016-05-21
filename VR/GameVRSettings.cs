@@ -27,9 +27,18 @@ namespace Demonixis.Toolbox.VR
         private static VRDeviceManager activeManager = null;
         private bool _vrChecked = false;
 
+        [SerializeField]
+        private KeyCode _recenterKey = KeyCode.None;
+
         void Awake()
         {
             GetVRDevice();
+        }
+
+        void Update()
+        {
+            if (Input.GetKeyDown(_recenterKey))
+                Recenter();
         }
 
         /// <summary>
