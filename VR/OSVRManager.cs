@@ -1,7 +1,6 @@
 ﻿using OSVR.Unity;
 using UnityEngine;
 using UnityEngine.VR;
-using Demonixis.Toolbox.Utils;
 using System.Collections;
 
 namespace Demonixis.Toolbox.VR
@@ -14,8 +13,12 @@ namespace Demonixis.Toolbox.VR
         private bool _unityVRWasEnabled = false;
         private DisplayController displayController;
 
+        [Tooltip("Add the name of the components you want to copy on the created cameras. Usefull for post processes.")]
         [SerializeField]
-        private string[] _typeToCopyToEyes = null;
+        private string[] _componentsToCopyToEyes = null;
+        [Tooltip("Add the name of the components you want to remove from the main camera. Usefull for unused post processes.")]
+        [SerializeField]
+        private string[] _componentsToRemoveFromCamera = null;
 
         public override bool IsEnabled
         {
@@ -102,10 +105,12 @@ namespace Demonixis.Toolbox.VR
                     displayController.showDirectModePreview = showDirectModePreview;
                     camera.gameObject.AddComponent<VRViewer>();
 
-                    if (_typeToCopyToEyes != null)
+                    if (_componentsToCopyToEyes != null)
                         StartCoroutine(CopyComponentsToEyes());
 
-                    Recenter();
+                    if (_componentsToRemoveFromCamera != null)
+                        StartCoroutine(RemoveComponentsFromCamera());
+
                 }
                 else if (displayController != null)
                 {
@@ -129,9 +134,9 @@ namespace Demonixis.Toolbox.VR
             var eyes = camera.parent.GetComponentsInChildren<VRSurface>(true);
             var eyesCount = eyes.Length;
 
-            for (int i = 0, l = _typeToCopyToEyes.Length; i < l; i++)
+            for (int i = 0, l = _componentsToCopyToEyes.Length; i < l; i++)
             {
-                component = camera.GetComponent(_typeToCopyToEyes[i]);
+                component = camera.GetComponent(_componentsToCopyToEyes[i]);
 
                 if (component != null)
                 {
@@ -142,6 +147,15 @@ namespace Demonixis.Toolbox.VR
                     }
                 }
             }
+        }
+
+        private IEnumerator RemoveComponentsFromCamera()
+        {
+            yield return new WaitForEndOfFrame();
+
+            var camera = Camera.main;
+            for (int i = 0, l = _componentsToRemoveFromCamera.Length; i < l; i++)
+                Destroy(camera.GetComponent(_componentsToRemoveFromCamera[i]));
         }
 
         private Component CopyComponent(Component component, GameObject destination)

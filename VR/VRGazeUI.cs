@@ -1,8 +1,10 @@
-﻿#define USE_DOT_TWEEN
+﻿#define USE_DOTTWEEN
 #define USE_INCONTROL
-using Demonixis.Toolbox.Utils;
-#if USE_DOT_TWEEN
+#if USE_DOTTWEEN
 using DG.Tweening;
+#endif
+#if USE_INCONTROL
+using InControl;
 #endif
 using System.Collections;
 using System.Collections.Generic;
@@ -27,25 +29,62 @@ namespace Demonixis.Toolbox.VR
         private Image _crosshair = null;
         private Color _originalColor = Color.white;
 
-        [Header("Animation")]
+        [Header("Audio")]
         [SerializeField]
-        private float _normalScale = 0.8f;
-        [SerializeField]
-        private float _highlightScale = 1.5f;
-#if USE_DOT_TWEEN
-        [SerializeField]
-        private float _highlightTime = 0.65f;
-        [SerializeField]
-        private float _normalTime = 0.35f;
-#endif
+        private AudioClip _clickSound = null;
 
         [Header("Cursor")]
         [SerializeField]
+        private float _cursorOverScale = 1.5f;
+        [SerializeField]
+        private bool _changeCursorColor = true;
+        [SerializeField]
         private Color _clickColor = new Color(0.95f, 0.9f, 0.1f, 0.3f);
 
-        void Start()
+        [Header("Input")]
+#if USE_INCONTROL
+        [SerializeField]
+        private int[] _validationActions = new int[] { 1 };
+        [SerializeField]
+        private int[] _validationBumpers = null;
+        [SerializeField]
+        private int[] _validationTriggers = null;
+#else
+        [SerializeField]
+        private KeyCode[] _validationKeys = new KeyCode[] { KeyCode.Space, KeyCode.Return };
+        [SerializeField]
+        private string[] _validationButtons = new string[] { "Fire1", "Jump" };
+#endif
+
+        [Header("Settings")]
+        [SerializeField]
+        private bool _autoClickEnabled = false;
+        [SerializeField]
+        private float _animationTime = 0.65f;
+
+        IEnumerator Start()
         {
-            StartCoroutine(InitializePointer());
+            yield return new WaitForEndOfFrame();
+
+            if (EventSystem.current == null)
+                throw new UnityException("[VRGazeUI] EventSystem is null.");
+
+            var scaling = GameVRSettings.RenderScale;
+            var screenCenter = new Vector2(Screen.width * 0.5f * scaling, Screen.height * 0.5f * scaling);
+
+            _eventSystem = EventSystem.current;
+            _pointer = new PointerEventData(_eventSystem);
+            _transform = GetComponent<Transform>();
+            _transform.localScale = Vector3.one;
+            _raycasts = new List<RaycastResult>();
+            _pointer.position = screenCenter;
+            _crosshair = GetComponent<Image>();
+            _originalColor = _crosshair.color;
+            _ready = true;
+
+#if USE_INCONTROL
+            Destroy(_eventSystem.GetComponent<InControlInputModule>());
+#endif
         }
 
         void Update()
@@ -54,13 +93,11 @@ namespace Demonixis.Toolbox.VR
                 return;
 
             _eventSystem.RaycastAll(_pointer, _raycasts);
-
             _selected = GetFirstValidUI();
 
             if (_selected != null)
             {
-                Debug.Log(_selected.name);
-                if (IsActionDown())
+                if (IsInputDown())
                     Click(_selected.gameObject);
                 else if (_eventSystem.currentSelectedGameObject != _selected.gameObject)
                     SelectGameObject(_selected.gameObject);
@@ -69,38 +106,105 @@ namespace Demonixis.Toolbox.VR
                 SelectGameObject(null);
         }
 
-        protected virtual bool IsActionDown()
+        protected virtual bool IsInputDown()
         {
-#if USE_INCONTROL
-            var device = InControl.InputManager.ActiveDevice;
+            var hasClicked = false;
+            var i = 0;
+            var size = 0;
 
-            return device.Action1.WasPressed || device.Action3.WasPressed;
+#if USE_INCONTROL
+            var device = InputManager.ActiveDevice;
+
+            if (_validationActions != null)
+            {
+                size = _validationActions.Length;
+                for (i = 0; i < size; i++)
+                {
+                    switch (_validationActions[i])
+                    {
+                        case 1: hasClicked |= device.Action1.WasPressed; break;
+                        case 2: hasClicked |= device.Action2.WasPressed; break;
+                        case 3: hasClicked |= device.Action3.WasPressed; break;
+                        case 4: hasClicked |= device.Action4.WasPressed; break;
+                    }
+                }
+            }
+
+            if (_validationBumpers != null)
+            {
+                size = _validationBumpers.Length;
+                for (i = 0; i < size; i++)
+                {
+                    switch (_validationBumpers[i])
+                    {
+                        case 1: hasClicked |= device.LeftBumper.WasPressed; break;
+                        case 2: hasClicked |= device.RightBumper.WasPressed; break;
+                    }
+                }
+            }
+
+            if (_validationTriggers != null)
+            {
+                size = _validationTriggers.Length;
+                for (i = 0; i < size; i++)
+                {
+                    switch (_validationTriggers[i])
+                    {
+                        case 1: hasClicked |= device.LeftTrigger.WasPressed; break;
+                        case 2: hasClicked |= device.RightTrigger.WasPressed; break;
+                    }
+                }
+            }
 #else
-            return Input.GetKeyDown(KeyCode.Return) ||
-                Input.GetKeyDown(KeyCode.Space) ||
-                Input.GetButtonDown("Fire1") ||
-                Input.GetButtonDown("Jump");
+            if (_validationKeys != null)
+            {
+                size = _validationKeys.Length;
+                for (i = 0; i < size; i++)
+                    hasClicked |= Input.GetKeyDown(_validationKeys[i]);
+            }
+
+            if (_validationButtons != null)
+            {
+                size = _validationButtons.Length;
+                for (i = 0; i < size; i++)
+                    hasClicked |= Input.GetButtonDown(_validationButtons[i]);
+            }
 #endif
+
+            return hasClicked;
         }
 
         private void Click(GameObject selected)
         {
             var uiElement = selected.GetComponent<IPointerClickHandler>();
-            if (uiElement == null)
+            var clicked = uiElement != null;
+
+            if (!clicked)
             {
                 var toggle = selected.GetComponent(typeof(Toggle)) as Toggle;
                 if (toggle == null)
                     toggle = selected.GetComponentInParent(typeof(Toggle)) as Toggle;
 
                 if (toggle != null)
+                {
                     toggle.isOn = !toggle.isOn;
-
-                _crosshair.color = _clickColor;
-
-                StartCoroutine(RestoreColor());
+                    clicked = true;
+                }
             }
             else
                 uiElement.OnPointerClick(_pointer);
+
+            if (clicked)
+            {
+
+                if (_changeCursorColor)
+                    StartCoroutine(ChangeCursorColor());
+
+                if (_clickSound != null)
+                    AudioSource.PlayClipAtPoint(_clickSound, _transform.position);
+
+                SelectGameObject(null);
+            }
         }
 
         private RectTransform GetFirstValidUI()
@@ -121,52 +225,39 @@ namespace Demonixis.Toolbox.VR
             return null;
         }
 
-        private IEnumerator InitializePointer()
-        {
-            yield return new WaitForEndOfFrame();
-            InitializeGazeUI();
-        }
-
-        protected virtual void InitializeGazeUI()
-        {
-            var scaling = GameVRSettings.RenderScale;
-            var screenCenter = new Vector2(Screen.width * 0.5f * scaling, Screen.height * 0.5f * scaling);
-
-            _eventSystem = EventSystem.current;
-            _pointer = new PointerEventData(_eventSystem);
-            _transform = (Transform)GetComponent(typeof(Transform));
-            _transform.localScale = new Vector3(_normalScale, _normalScale, _normalScale);
-            _raycasts = new List<RaycastResult>();
-            _pointer.position = screenCenter;
-            _crosshair = (Image)GetComponent(typeof(Image));
-            _originalColor = _crosshair.color;
-            _ready = true;
-
-            if (_eventSystem == null)
-            {
-                Debug.LogError("EventSystem is null");
-                Destroy(this);
-            }
-            else
-                Destroy(_eventSystem.GetComponent<InControl.InControlInputModule>());
-        }
-
         private void SelectGameObject(GameObject go)
         {
             _eventSystem.SetSelectedGameObject(go);
 
-            var targetScale = go == null ? _normalScale : _highlightScale;
+            var targetScale = go == null ? 1.0f : _cursorOverScale;
 
-#if USE_DOT_TWEEN
-            _transform.DOScale(targetScale, go == null ? _normalTime : _highlightTime);
+#if USE_DOTTWEEN
+            if (DOTween.IsTweening(_transform))
+                DOTween.KillAll();
+
+            _transform.DOScale(targetScale, go == null ? 0.35f : _animationTime);
 #else
             _transform.localScale = new Vector3(targetScale, targetScale, targetScale); 
 #endif
+
+            if (go != null && _autoClickEnabled)
+                StartCoroutine(TryAutoClick(go));
         }
 
-        private IEnumerator RestoreColor()
+        private IEnumerator TryAutoClick(GameObject target)
         {
+            yield return new WaitForSeconds(_animationTime);
+
+            if (_selected != null && _selected.gameObject == target)
+                Click(_selected.gameObject);
+        }
+
+        private IEnumerator ChangeCursorColor()
+        {
+            _crosshair.color = _clickColor;
+
             yield return new WaitForSeconds(0.6f);
+
             _crosshair.color = _originalColor;
         }
     }

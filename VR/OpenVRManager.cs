@@ -110,9 +110,6 @@ namespace Demonixis.Toolbox.VR
                 StartCoroutine(FixHeadTransform(trackingSpace.parent, steamCamera.transform));
             }
 
-            if (isEnabled)
-                Recenter();
-
             VRSettings.enabled = isEnabled;
         }
 

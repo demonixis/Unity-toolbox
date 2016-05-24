@@ -9,6 +9,7 @@
 #define USE_OPENVR_SDK
 #endif
 
+using System.Collections;
 using UnityEngine;
 using UnityEngine.VR;
 
@@ -69,6 +70,9 @@ namespace Demonixis.Toolbox.VR
                         activeManager = vrManagers[i];
                         activeManager.SetVREnabled(true);
                         deviceType = activeManager.VRDeviceType;
+
+                        StartCoroutine(RecenterEndOfFrame());
+
                         continue;
                     }
 
@@ -79,6 +83,18 @@ namespace Demonixis.Toolbox.VR
             return deviceType;
         }
 
+        /// <summary>
+        /// Recenter the view at the very end of the life cycle process.
+        /// </summary>
+        /// <returns></returns>
+        private IEnumerator RecenterEndOfFrame()
+        {
+            yield return new WaitForEndOfFrame();
+
+            if (activeManager != null)
+                activeManager.Recenter();
+        }
+        
         #region Static Fields
 
         /// <summary>
