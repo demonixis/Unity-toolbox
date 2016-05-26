@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.VR;
 using Valve.VR;
 
@@ -15,13 +14,11 @@ namespace Demonixis.Toolbox.VR
         #region Inspector Fields
 
         [SerializeField]
+        private bool _addControllersNode = true;
+        [SerializeField]
         private bool _addModelControllers = false;
         [SerializeField]
         private bool _addPlayArea = false;
-        [SerializeField]
-        private bool _fixHeadPosition = true;
-        [SerializeField]
-        private bool _fixHeadRotation = false;
 
         #endregion
 
@@ -60,12 +57,6 @@ namespace Demonixis.Toolbox.VR
             if (!IsPresent)
                 return;
 
-            // /!\ You have to change one line in SteamVR_Camera.cs
-            // var camera = head.GetComponent<Camera>();
-            // become
-            // var camera = head.gameObject.AddComponent<Camera>();
-            // Because the head is just created and no scripts are attached to it.
-
             if (steamCamera == null)
             {
                 var playerObject = GameObject.FindWithTag("Player");
@@ -80,22 +71,25 @@ namespace Demonixis.Toolbox.VR
                 steamCamera = camera.gameObject.AddComponent<SteamVR_Camera>();
 
                 // The controllers.
-                var controllerGameObject = new GameObject("SteamVR_Controllers");
-                var controllerTransform = controllerGameObject.transform;
-                controllerTransform.parent = head;
-                controllerTransform.localPosition = Vector3.zero;
-                controllerTransform.localRotation = Quaternion.identity;
-                // We need to disable the gameobject because the SteamVR_ControllerManager component
-                // Will check attached controllers in the awake method.
-                // Here we don't have attached controllers yet.
-                controllerGameObject.SetActive(false);
+                if (_addControllersNode)
+                {
+                    var controllerGameObject = new GameObject("SteamVR_Controllers");
+                    var controllerTransform = controllerGameObject.transform;
+                    controllerTransform.parent = head;
+                    controllerTransform.localPosition = Vector3.zero;
+                    controllerTransform.localRotation = Quaternion.identity;
+                    // We need to disable the gameobject because the SteamVR_ControllerManager component
+                    // Will check attached controllers in the awake method.
+                    // Here we don't have attached controllers yet.
+                    controllerGameObject.SetActive(false);
 
-                var controllerManager = controllerGameObject.AddComponent<SteamVR_ControllerManager>();
-                controllerManager.left = CreateController(controllerManager.transform, "Controller (left)");
-                controllerManager.right = CreateController(controllerManager.transform, "Controller (right)");
+                    var controllerManager = controllerGameObject.AddComponent<SteamVR_ControllerManager>();
+                    controllerManager.left = CreateController(controllerManager.transform, "Controller (left)");
+                    controllerManager.right = CreateController(controllerManager.transform, "Controller (right)");
 
-                // Now that controllers are attached, we can enable the GameObject
-                controllerGameObject.SetActive(true);
+                    // Now that controllers are attached, we can enable the GameObject
+                    controllerGameObject.SetActive(true);
+                }
 
                 // And finally the play area.
                 if (_addPlayArea)
@@ -107,7 +101,8 @@ namespace Demonixis.Toolbox.VR
                     playArea.AddComponent<SteamVR_PlayArea>();
                 }
 
-                StartCoroutine(FixHeadTransform(trackingSpace.parent, steamCamera.transform));
+                head.localPosition = Vector3.zero;
+                head.localRotation = Quaternion.identity;
             }
 
             VRSettings.enabled = isEnabled;
@@ -141,27 +136,6 @@ namespace Demonixis.Toolbox.VR
             }
 
             return null;
-        }
-
-        private IEnumerator FixHeadTransform(Transform head, Transform mainCamera)
-        {
-            yield return new WaitForEndOfFrame();
-
-            if (_fixHeadPosition)
-            {
-                var headPosition = head.localPosition;
-                var camPosition = steamCamera.transform.localPosition;
-                headPosition.y -= camPosition.y;
-                head.localPosition = headPosition;
-            }
-
-            if (_fixHeadRotation)
-            {
-                var headRotation = head.localRotation.eulerAngles;
-                var camRotation = steamCamera.transform.eulerAngles;
-                headRotation.y -= camRotation.y;
-                head.localRotation = Quaternion.Euler(headRotation);
-            }
         }
     }
 }
