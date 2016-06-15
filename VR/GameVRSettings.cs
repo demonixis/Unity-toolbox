@@ -1,12 +1,12 @@
 ﻿#if UNITY_ANDROID
-#define USE_CARDBOARD_SDK
+#define USE_GOOGLEVR_SDK
 #endif
 #if UNITY_STANDALONE || UNITY_ANDROID
-#define USE_OSVR_SDK
-#define USE_OVR_SDK
+#define _USE_OSVR_SDK
+#define _USE_OVR_SDK
 #endif
 #if UNITY_STANDALONE
-#define USE_OPENVR_SDK
+#define _USE_OPENVR_SDK
 #endif
 
 using System.Collections;
@@ -18,7 +18,7 @@ namespace Demonixis.Toolbox.VR
     public enum VRDeviceType
     {
         None = 0,
-        Cardboard,
+        GoogleVR,
         UnityVR,
         OSVR
     }
@@ -108,13 +108,13 @@ namespace Demonixis.Toolbox.VR
         /// <summary>
         /// Indicates if Cardboard is enabled.
         /// </summary>
-        public static bool CardboardEnabled
+        public static bool GoogleVREnabled
         {
             get
             {
-#if USE_CARDBOARD_SDK
-                var cardboard = Cardboard.SDK;
-                if (cardboard != null && cardboard.VRModeEnabled)
+#if USE_GOOGLEVR_SDK
+                var gvrViewer = GvrViewer.Instance;
+                if (gvrViewer != null && gvrViewer.VRModeEnabled)
                     return true;
 #endif
                 return false;

@@ -2,15 +2,15 @@
 
 namespace Demonixis.Toolbox.VR
 {
-    public class CardboardManager : VRDeviceManager
+    public class GoogleVRManager : VRDeviceManager
     {
-        private Cardboard cardboard = null;
+        private GvrViewer gvrViewer = null;
 
         #region Public Fields
 
         public override bool IsEnabled
         {
-            get { return cardboard != null ? cardboard.VRModeEnabled : false; }
+            get { return gvrViewer != null ? gvrViewer.VRModeEnabled : false; }
         }
 
         public static bool IsSupported
@@ -39,13 +39,13 @@ namespace Demonixis.Toolbox.VR
 
         public override float RenderScale
         {
-            get { return Cardboard.SDK.StereoScreenScale; }
-            set { Cardboard.SDK.StereoScreenScale = value; }
+            get { return GvrViewer.Instance.StereoScreenScale; }
+            set { GvrViewer.Instance.StereoScreenScale = value; }
         }
 
         public override VRDeviceType VRDeviceType
         {
-            get { return VRDeviceType.Cardboard; }
+            get { return VRDeviceType.GoogleVR; }
         }
 
         #endregion
@@ -60,23 +60,23 @@ namespace Demonixis.Toolbox.VR
             if (!IsPresent)
                 return;
 
-            if (cardboard == null)
+            if (gvrViewer == null)
             {
                 var camera = Camera.main.gameObject;
                 var parent = camera.transform.parent.gameObject;
 
                 camera.AddComponent<StereoController>();
-                parent.AddComponent<CardboardHead>();
-                cardboard = gameObject.AddComponent<Cardboard>();
+                parent.AddComponent<GvrHead>();
+                gvrViewer = gameObject.AddComponent<GvrViewer>();
             }
 
-            cardboard.VRModeEnabled = isEnabled;
+            gvrViewer.VRModeEnabled = isEnabled;
         }
 
         public override void Recenter()
         {
 #if UNITY_ANDROID
-            Cardboard.SDK.Recenter();
+            GvrViewer.Instance.Recenter();
 #endif
         }
     }
