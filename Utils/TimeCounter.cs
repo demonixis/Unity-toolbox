@@ -1,5 +1,4 @@
-﻿using MarsExtraction.Input;
-using System;
+﻿using System;
 using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
@@ -55,10 +54,6 @@ public sealed class TimeCounter : MonoBehaviour
             _minutes = minutes;
             _seconds = seconds;
             _miliseconds = milliseconds;
-
-            // FIXME
-            if (InputHelper.MustUseTouchControls)
-                _minutes += 10;
         }
     }
 

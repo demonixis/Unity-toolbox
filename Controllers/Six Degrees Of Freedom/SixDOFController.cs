@@ -23,9 +23,9 @@ public class SixDOFController : MonoBehaviour
 
 	void Start () 
 	{
-		_rigidbody = rigidbody;
+		_rigidbody = GetComponent<Rigidbody>();
 		Screen.lockCursor = true;
-		Screen.showCursor = false;
+		Cursor.visible = false;
 	}
 
     void Update()

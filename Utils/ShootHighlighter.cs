@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
 
 public sealed class ShootHighlighter : MonoBehaviour
 {
@@ -25,32 +26,27 @@ public sealed class ShootHighlighter : MonoBehaviour
 
     void Start()
     {
-        if (GamePrefs.settings.ShaderQuality == MarsExtraction.GameSettings.ShaderQualityLevel.High)
+        if (!hasManyRenderers)
         {
-            if (!hasManyRenderers)
-            {
-                _renderers = new Renderer[1];
-                _renderers[0] = GetComponent<Renderer>();
-            }
-            else
-                _renderers = GetComponentsInChildren<Renderer>();
-
-            _renderersCount = _renderers.Length;
-
-            if (!_renderers[0].material.HasProperty("_Color"))
-            {
-                _enabled = false;
-                return;
-            }
-
-            if (keepRendererColor)
-                normalColor = _renderers[0].material.color;
-
-            if (preserveAlpha)
-                highlightColor.a = normalColor.a;
+            _renderers = new Renderer[1];
+            _renderers[0] = GetComponent<Renderer>();
         }
         else
+            _renderers = GetComponentsInChildren<Renderer>();
+
+        _renderersCount = _renderers.Length;
+
+        if (!_renderers[0].material.HasProperty("_Color"))
+        {
             _enabled = false;
+            return;
+        }
+
+        if (keepRendererColor)
+            normalColor = _renderers[0].material.color;
+
+        if (preserveAlpha)
+            highlightColor.a = normalColor.a;
     }
 
     public void Highlight()
@@ -71,7 +67,7 @@ public sealed class ShootHighlighter : MonoBehaviour
         }
     }
 
-    private void SetColor(bool hl)
+    private IEnumerator SetColor(bool hl)
     {
         if (_enabled)
         {
@@ -79,6 +75,8 @@ public sealed class ShootHighlighter : MonoBehaviour
                 _renderers[i].material.color = hl ? normalColor : highlightColor;
         }
 
-        Invoke("SetNormal", highlightDuration);
+        yield return new WaitForSeconds(highlightDuration);
+
+        SetNormal();
     }
 }

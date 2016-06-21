@@ -1,5 +1,4 @@
-﻿using MarsExtraction.Input;
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 

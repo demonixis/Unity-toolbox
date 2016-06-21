@@ -1,5 +1,4 @@
-﻿using Demonixis.Toolbox.UI;
-using System;
+﻿using System;
 using UnityEngine;
 using UnityStandardAssets.ImageEffects;
 
@@ -31,12 +30,17 @@ namespace Demonixis.Toolbox.Graphics
 
         public Action FadeCompleted = null;
 
+        [SerializeField]
+        private bool _fadeOnStart = true;
+
         #region GameState Pattern
 
         void OnEnable()
         {
             Initialize();
-            StartFade(-1);
+
+            if (_fadeOnStart)
+                StartFade(-1);
         }
 
         void OnDestroy()
@@ -55,12 +59,9 @@ namespace Demonixis.Toolbox.Graphics
                 {
                     _overlay.intensity = _sign == 1 ? 1 : 0;
                     _enabled = false;
-                    
+
                     if (_overlay.intensity <= 0)
-                    {
                         _overlay.enabled = false;
-                        SetCameraRenderMode(false);
-                    }
 
                     if (FadeCompleted != null)
                         FadeCompleted();
@@ -98,7 +99,6 @@ namespace Demonixis.Toolbox.Graphics
             _overlay.intensity = _sign == 1 ? 0 : 1;
             _overlay.enabled = true;
             _enabled = true;
-            SetCameraRenderMode(true);
         }
 
         public void StopFade()
@@ -106,25 +106,6 @@ namespace Demonixis.Toolbox.Graphics
             _enabled = false;
             _overlay.enabled = false;
             _overlay.intensity = _sign == 1 ? 0 : 1;
-            SetCameraRenderMode(false);
-        }
-
-        public void SetCameraRenderMode(bool isScreenspace)
-        {
-            if (!GameVRSettings.VRModeEnabled())
-            {
-                var camera = Camera.main;
-                if (camera != null)
-                {
-                    var canvas = UIHelper.GetCanvas();
-                    if (canvas.renderMode == RenderMode.WorldSpace)
-                        return;
-
-                    canvas.renderMode = isScreenspace ? RenderMode.ScreenSpaceCamera : RenderMode.ScreenSpaceOverlay;
-                    canvas.worldCamera = isScreenspace ? camera : null;
-                    canvas.planeDistance = camera.nearClipPlane + 0.05f;
-                }
-            }
         }
 
         public static void FadeIn(float fadeSpeed = 2.5f, Action fadeCompleted = null)
@@ -146,10 +127,30 @@ namespace Demonixis.Toolbox.Graphics
                 return;
 
             for (int i = 0, l = s_faders.Length; i < l; i++)
-            {
                 s_faders[i].Intensity = fill ? 1.0f : 0.0f;
-                s_faders[i].SetCameraRenderMode(false);
-            }
+        }
+
+        public static Texture2D GetOverlayTexture()
+        {
+            if (s_faders == null)
+                s_faders = FindObjectsOfType<ScreenFader>();
+
+            if (s_faders == null || s_faders.Length == 0)
+                return null;
+
+            return s_faders[0]._overlay.texture;
+        }
+
+        public static void SetOverlayTexture(Texture2D texture)
+        {
+            if (s_faders == null)
+                s_faders = FindObjectsOfType<ScreenFader>();
+
+            if (s_faders == null || s_faders.Length == 0)
+                return;
+
+            for (int i = 0, l = s_faders.Length; i < l; i++)
+                s_faders[i]._overlay.texture = texture;
         }
 
         private static void Fade(short sign, float fadeSpeed = 2.5f, Action fadeCompleted = null)

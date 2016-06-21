@@ -2,60 +2,57 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Demonixis.Toolbox.Editor
+public class SwapPrefabEditor : EditorWindow
 {
-	public class SwapPrefabEditor : EditorWindow
-	{
-		private GameObject group;
-		private GameObject targetGameObject;
-		private GameObject targetPrefab;
+    private GameObject group;
+    private GameObject targetGameObject;
+    private GameObject targetPrefab;
 
-		[MenuItem("Demonixis/Prefab Swapper")]
-		public static void ShowWindow()
-		{
-			EditorWindow.GetWindow(typeof(SwapPrefabEditor));
-		}
+    [MenuItem("Demonixis/Prefab Swapper")]
+    public static void ShowWindow()
+    {
+        GetWindow(typeof(SwapPrefabEditor));
+    }
 
-		void OnGUI()
-		{
-			GUILayout.Label("Swap", EditorStyles.boldLabel);
+    void OnGUI()
+    {
+        GUILayout.Label("Swap", EditorStyles.boldLabel);
 
-			group = EditorGUILayout.ObjectField("Group", group, typeof(GameObject), true) as GameObject;
-			targetGameObject = EditorGUILayout.ObjectField("Target GameObject", targetGameObject, typeof(GameObject), true) as GameObject;
-			targetPrefab = EditorGUILayout.ObjectField("Target Prefab", targetPrefab, typeof(GameObject), true) as GameObject;
+        group = EditorGUILayout.ObjectField("Group", group, typeof(GameObject), true) as GameObject;
+        targetGameObject = EditorGUILayout.ObjectField("Target GameObject", targetGameObject, typeof(GameObject), true) as GameObject;
+        targetPrefab = EditorGUILayout.ObjectField("Target Prefab", targetPrefab, typeof(GameObject), true) as GameObject;
 
-			if (GUILayout.Button ("Apply") && (group != null || targetGameObject != null) && targetPrefab != null) 
-			{
-				if (group != null)
-				{
-					foreach (Transform tr in group.transform)
-						SwapObject(tr.gameObject, targetPrefab);
-				}
-				else
-					SwapObject(targetGameObject, targetPrefab);
-			}
-		}
+        if (GUILayout.Button("Apply") && (group != null || targetGameObject != null) && targetPrefab != null)
+        {
+            if (group != null)
+            {
+                foreach (Transform tr in group.transform)
+                    SwapObject(tr.gameObject, targetPrefab);
+            }
+            else
+                SwapObject(targetGameObject, targetPrefab);
+        }
+    }
 
-		private void SwapObject(GameObject current, GameObject prefab)
-		{
-			var position = current.transform.position;
-			var rotation = current.transform.rotation;
-			var scale = current.transform.localScale;
-			var name = current.name;
-			var tag = current.tag;
-			var parent = current.transform.parent;
+    private void SwapObject(GameObject current, GameObject prefab)
+    {
+        var position = current.transform.position;
+        var rotation = current.transform.rotation;
+        var scale = current.transform.localScale;
+        var name = current.name;
+        var tag = current.tag;
+        var parent = current.transform.parent;
 
-			DestroyImmediate(current);
+        DestroyImmediate(current);
 
-			var go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+        var go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
 
-			go.transform.parent = parent;
-			go.transform.position = position;
-			go.transform.rotation = rotation;
-			go.transform.localScale = scale;
-			go.name = name;
-			go.tag = tag;
-		}
-	}
+        go.transform.parent = parent;
+        go.transform.position = position;
+        go.transform.rotation = rotation;
+        go.transform.localScale = scale;
+        go.name = name;
+        go.tag = tag;
+    }
 }
 #endif

@@ -1,8 +1,4 @@
-﻿#define USE_INCONTROL
-#if USE_INCONTROL
-using InControl;
-#endif
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Demonixis.Toolbox.Controllers
 {
@@ -10,7 +6,7 @@ namespace Demonixis.Toolbox.Controllers
     /// SimpleMouseRotator: Easily turn an object on X/Y axis.
     /// It's a fork of the Unity's version of SimpleMouseRotator.
     /// </summary>
-    public sealed class SimpleMouseRotator : MonoBehaviour
+    public abstract class SimpleAbstractRotator : MonoBehaviour
     {
         // Caches
         private Vector3 _targetAngles = Vector3.zero;
@@ -18,39 +14,34 @@ namespace Demonixis.Toolbox.Controllers
         private Vector3 _followVelocity = Vector3.zero;
         private Quaternion _originalRotation = Quaternion.identity;
         private Transform _transform = null;
-        private float _inputH = 0.0f;
-        private float _inputV = 0.0f;
+        private float _inputHorizontal = 0.0f;
+        private float _inputVertical = 0.0f;
 
+        [Header("Move Settings")]
         [SerializeField]
-        private float _sensibilityX = 1.0f;
-        [SerializeField]
-        private float _sensibilityY = 1.0f;
-        [SerializeField]
-        public Vector2 _rotationRange = new Vector3(180.0f, 70.0f);
+        public Vector2 _rotationRange = new Vector3(90.0f, 960.0f);
         [SerializeField]
         public float _rotationSpeed = 5.0f;
         [SerializeField]
         public float _damping = 0.1f;
+        [SerializeField]
+        protected float _sensibilityX = 1.0f;
+        [SerializeField]
+        protected float _sensibilityY = 1.0f;
 
-        void Start()
+        protected virtual void Start()
         {
             _transform = (Transform)GetComponent(typeof(Transform));
             _originalRotation = _transform.localRotation;
         }
 
-        void Update()
+        protected virtual void Update()
         {
-#if USE_INCONTROL
-            var device = InputManager.ActiveDevice;
-            _inputH = device.RightStickX * _sensibilityX;
-            _inputV = device.RightStickY * _sensibilityY;
-#else
-            _inputH = Input.GetAxis("Mouse X") * _sensibilityX;
-            _inputV = Input.GetAxis("Mouse Y") * _sensibilityY;
-#endif
-
+            UpdateInput(ref _inputHorizontal, ref _inputVertical);
             UpdateControls();
         }
+
+        protected abstract void UpdateInput(ref float horizontal, ref float vertical);
 
         private void UpdateControls()
         {
@@ -82,8 +73,8 @@ namespace Demonixis.Toolbox.Controllers
                 _followAngles.x += 360;
             }
 
-            _targetAngles.y += _inputH * _rotationSpeed;
-            _targetAngles.x += _inputV * _rotationSpeed;
+            _targetAngles.y += _inputHorizontal * _rotationSpeed;
+            _targetAngles.x += _inputVertical * _rotationSpeed;
 
             // clamp values to allowed range
             _targetAngles.y = Mathf.Clamp(_targetAngles.y, -_rotationRange.y * 0.5f, _rotationRange.y * 0.5f);

@@ -1,4 +1,4 @@
-﻿#define USE_INCONTROL
+﻿#define USE_INCONTROL_
 #if USE_INCONTROL
 using InControl;
 #endif
