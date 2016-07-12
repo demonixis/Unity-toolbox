@@ -2,6 +2,7 @@
 using UnityEngine;
 using UnityEngine.VR;
 using System.Collections;
+using System;
 
 namespace Demonixis.Toolbox.VR
 {
@@ -25,7 +26,7 @@ namespace Demonixis.Toolbox.VR
             get { return displayController != null; }
         }
 
-        public override bool IsPresent
+        public override bool IsAvailable
         {
             get
             {
@@ -88,7 +89,7 @@ namespace Demonixis.Toolbox.VR
 
         public override void SetVREnabled(bool isEnabled)
         {
-            if (!IsPresent)
+            if (!IsAvailable)
                 return;
 
             _unityVRWasEnabled = VRSettings.enabled;

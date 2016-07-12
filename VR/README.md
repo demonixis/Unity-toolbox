@@ -5,7 +5,7 @@ This namespace contains an abstraction of few VR SDKs. Without any code, it's ea
 ## Requirement
 - Enable the VR support in `PlayerPrefs`
 - Download VR SDKs of your choice
-    - [Cardboard SDK](https://developers.google.com/cardboard/unity/)
+    - [GoogleVR SDK](https://developers.google.com/vr/unity/)
 	- [Oculus SDK](https://developer.oculus.com/downloads/)
 	- [OSVR SDK](https://github.com/OSVR/OSVR-Unity)
 	- [OpenVR SDK](https://www.assetstore.unity3d.com/en/#!/content/32647)
@@ -14,28 +14,18 @@ This namespace contains an abstraction of few VR SDKs. Without any code, it's ea
 Your player object **must** respect the same hierarchy as the Oculus SDK Camera Rig prefab.
 
 Player (`GameObject`)
-    : Head (`Transform`)
-        : TrackingSpace (`Transform`)
-            : EyeCenterAnchor (`Camera`)
+* Head (`Transform`)
+* * TrackingSpace (`Transform`)
+* * * EyeCenterAnchor (`Camera`)
             
 All scripts can be put on the `GameObject` of you choice because they use the `Camera.main` helper to find the **Main Camera**. However I recommand you to put them on the Head GameObject.
 
 Note that you can change the Transform of the Head object. It's not recommanded to change the TrackingSpace Transform. Finally the MainCamera Transform is overrided by Unity or the VR SDK with the HMD's rotations & positions.
 
 If you don't want to use a specific SDK, just remove the adapted `define` in `GameVRSettings`.
-- `USE_CARDBOARD_SDK`
-- `USE_OSVR_SDK`
-- `USE_OPENVR_SDK`
-
-### About OpenVR
-
-There is a small bug in the SteamVR plugin, you have to manually change a line in `SteamVR_Camera.cs`
-```CSharp
-// SteamVR_Camera.cs line 184
-var camera = head.GetComponent<Camera>();
-// Become
-var camera = head.gameObject.AddComponent<Camera>();
-```
+- `GOOGLE_VR_SDK`
+- `OSVR_SDK`
+- `OPENVR_SDK`
 
 ## Using it
 

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace Demonixis.Toolbox.VR
 {
@@ -25,11 +26,13 @@ namespace Demonixis.Toolbox.VR
             }
         }
 
-        public override bool IsPresent
+        public override bool IsAvailable
         {
             get
             {
 #if UNITY_ANDROID
+                // Don't load if if the GearVR mode is enabled.
+                // Must be changed when Unity will supports DayDream
                 return !UnityEngine.VR.VRDevice.isPresent && IsSupported;
 #else
                 return false;
@@ -48,6 +51,11 @@ namespace Demonixis.Toolbox.VR
             get { return VRDeviceType.GoogleVR; }
         }
 
+        public override Vector3 HeadPosition
+        {
+            get { return Vector3.zero; }
+        }
+
         #endregion
 
         public override void Dispose()
@@ -57,7 +65,7 @@ namespace Demonixis.Toolbox.VR
 
         public override void SetVREnabled(bool isEnabled)
         {
-            if (!IsPresent)
+            if (!IsAvailable)
                 return;
 
             if (gvrViewer == null)

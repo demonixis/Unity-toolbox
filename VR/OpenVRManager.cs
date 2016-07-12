@@ -5,20 +5,21 @@ using Valve.VR;
 namespace Demonixis.Toolbox.VR
 {
     /// <summary>
-    /// OsvrManager - Manages all aspect of the VR from this singleton.
+    /// OpenVRManager is responsible to create the structure of the player using the OpenVR SDK. There are also some options to tweak the player.
     /// </summary>
-    public sealed class OpenVRManager : VRDeviceManager
+    public sealed class OpenVRManager : UnityVRDevice
     {
         private SteamVR_Camera steamCamera = null;
 
         #region Inspector Fields
 
+        [Header("OpenVR SDK Settings")]
         [SerializeField]
         private bool _addControllersNode = true;
         [SerializeField]
-        private bool _addModelControllers = false;
+        private bool _addControllersModels = true;
         [SerializeField]
-        private bool _addPlayArea = false;
+        private bool _addPlayArea = true;
 
         #endregion
 
@@ -29,32 +30,21 @@ namespace Demonixis.Toolbox.VR
             get { return VRSettings.enabled && OpenVR.IsHmdPresent(); }
         }
 
-        public override bool IsPresent
+        public override bool IsAvailable
         {
             get { return VRDevice.isPresent && OpenVR.IsHmdPresent(); }
         }
 
-        public override float RenderScale
+        public override string UnityVRName
         {
-            get { return VRSettings.renderScale; }
-            set { VRSettings.renderScale = value; }
-        }
-
-        public override VRDeviceType VRDeviceType
-        {
-            get { return VRDeviceType.UnityVR; }
+            get { return "OpenVR"; }
         }
 
         #endregion
 
-        public override void Dispose()
-        {
-            Destroy(this);
-        }
-
         public override void SetVREnabled(bool isEnabled)
         {
-            if (!IsPresent)
+            if (!IsAvailable)
                 return;
 
             if (steamCamera == null)
@@ -63,6 +53,10 @@ namespace Demonixis.Toolbox.VR
                 var camera = Camera.main.transform;
                 var trackingSpace = camera.parent;
                 var head = trackingSpace != null ? trackingSpace.parent : trackingSpace;
+
+                // We store the head transform and its initial position for future calibrations.
+                m_headTransform = head.GetComponent<Transform>();
+                m_originalHeadPosition = m_headTransform.localPosition;
 
                 if (playerObject == null || trackingSpace == null)
                     throw new UnityException("[OpenVRManager] Your prefab doesn't respect the correct hierarchy");
@@ -101,16 +95,15 @@ namespace Demonixis.Toolbox.VR
                     playArea.AddComponent<SteamVR_PlayArea>();
                 }
 
-                head.localPosition = Vector3.zero;
-                head.localRotation = Quaternion.identity;
+                if (_fixHeadPosition)
+                    StartCoroutine(ResetHeadPosition(0.5f));
+                else
+                    m_headTransform.localPosition = Vector3.zero;
+
+                m_headTransform.localRotation = Quaternion.identity;
             }
 
             VRSettings.enabled = isEnabled;
-        }
-
-        public override void Recenter()
-        {
-            InputTracking.Recenter();
         }
 
         private GameObject CreateController(Transform parent, string name)
@@ -123,7 +116,7 @@ namespace Demonixis.Toolbox.VR
                 var trackedObject = node.AddComponent<SteamVR_TrackedObject>();
                 trackedObject.index = SteamVR_TrackedObject.EIndex.None;
 
-                if (_addModelControllers)
+                if (_addControllersModels)
                 {
                     var model = new GameObject("Model");
                     model.transform.parent = node.transform;

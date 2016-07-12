@@ -1,20 +1,24 @@
 ﻿#if UNITY_ANDROID
-#define USE_GOOGLEVR_SDK
+#define GOOGLE_VR_SDK
 #endif
 #if UNITY_STANDALONE || UNITY_ANDROID
-#define _USE_OSVR_SDK
-#define _USE_OVR_SDK
+#define OSVR_SDK
+#define OCULUS_SDK
 #endif
 #if UNITY_STANDALONE
-#define _USE_OPENVR_SDK
+#define OPENVR_SDK
 #endif
 
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.VR;
 
 namespace Demonixis.Toolbox.VR
 {
+    /// <summary>
+    /// Defines the type of SDK.
+    /// </summary>
     public enum VRDeviceType
     {
         None = 0,
@@ -23,22 +27,40 @@ namespace Demonixis.Toolbox.VR
         OSVR
     }
 
+    /// <summary>
+    /// The GameVRSettings is responsible to check available VR devices and select the one with the higher priority.
+    /// It's also used to Recenter the view.
+    /// </summary>
     public sealed class GameVRSettings : MonoBehaviour
     {
-        private static VRDeviceManager activeManager = null;
+        #region Private Fields
+
+        private static VRDeviceManager s_ActiveVRDevice = null;
         private bool _vrChecked = false;
 
+        #endregion
+
+        #region Editor Fields
+
+        [Header("Default Settings")]
         [SerializeField]
         private KeyCode _recenterKey = KeyCode.None;
+        [SerializeField]
+        private string _recenterButton = string.Empty;
+
+        #endregion
+
+        #region Instance Methods
 
         void Awake()
         {
-            GetVRDevice();
+            if (enabled)
+                GetVRDevice();
         }
 
         void Update()
         {
-            if (Input.GetKeyDown(_recenterKey))
+            if (Input.GetKeyDown(_recenterKey) || (_recenterButton != string.Empty && Input.GetButtonDown(_recenterButton)))
                 Recenter();
         }
 
@@ -47,29 +69,29 @@ namespace Demonixis.Toolbox.VR
         /// </summary>
         /// <param name="forceCheck">Set to true to force the check.</param>
         /// <returns></returns>
-        public VRDeviceType GetVRDevice(bool forceCheck = false)
+        public VRDeviceType GetVRDevice()
         {
-            if (_vrChecked && !forceCheck)
-                return activeManager != null ? activeManager.VRDeviceType : VRDeviceType.None;
+            if (_vrChecked)
+                return s_ActiveVRDevice != null ? s_ActiveVRDevice.VRDeviceType : VRDeviceType.None;
 
             // Gets all managers and enable only the first connected device.
             var vrManagers = GetComponents<VRDeviceManager>();
             var count = vrManagers.Length;
             var deviceType = VRDeviceType.None;
 
-            activeManager = null;
+            s_ActiveVRDevice = null;
 
             if (count > 0)
             {
-                System.Array.Sort<VRDeviceManager>(vrManagers);
+                Array.Sort(vrManagers);
 
                 for (var i = 0; i < count; i++)
                 {
-                    if (vrManagers[i].IsPresent && deviceType == VRDeviceType.None)
+                    if (vrManagers[i].IsAvailable && deviceType == VRDeviceType.None)
                     {
-                        activeManager = vrManagers[i];
-                        activeManager.SetVREnabled(true);
-                        deviceType = activeManager.VRDeviceType;
+                        s_ActiveVRDevice = vrManagers[i];
+                        s_ActiveVRDevice.SetVREnabled(true);
+                        deviceType = s_ActiveVRDevice.VRDeviceType;
 
                         StartCoroutine(RecenterEndOfFrame());
 
@@ -91,18 +113,20 @@ namespace Demonixis.Toolbox.VR
         {
             yield return new WaitForEndOfFrame();
 
-            if (activeManager != null)
-                activeManager.Recenter();
+            if (s_ActiveVRDevice != null)
+                s_ActiveVRDevice.Recenter();
         }
-        
+
+        #endregion
+
         #region Static Fields
 
         /// <summary>
         /// Gets the active VR Device Manager.
         /// </summary>
-        public static VRDeviceManager ActiveManager
+        public static VRDeviceManager ActiveVRDevice
         {
-            get { return activeManager; }
+            get { return s_ActiveVRDevice; }
         }
 
         /// <summary>
@@ -112,10 +136,8 @@ namespace Demonixis.Toolbox.VR
         {
             get
             {
-#if USE_GOOGLEVR_SDK
-                var gvrViewer = GvrViewer.Instance;
-                if (gvrViewer != null && gvrViewer.VRModeEnabled)
-                    return true;
+#if GOOGLE_VR_SDK
+                return ActiveVRDevice != null && ActiveVRDevice is GoogleVRManager;
 #endif
                 return false;
             }
@@ -128,8 +150,8 @@ namespace Demonixis.Toolbox.VR
         {
             get
             {
-#if USE_OVR_SDK
-                return VRSettings.enabled && OVRManager.isHmdPresent;
+#if OCULUS_SDK
+                return ActiveVRDevice != null && ActiveVRDevice is OculusManager;
 #else
                 return false;
 #endif
@@ -143,17 +165,12 @@ namespace Demonixis.Toolbox.VR
         {
             get
             {
-#if USE_OSVR_SDK
-                var clientKit = OSVR.Unity.ClientKit.instance;
-                if (clientKit != null)
-                {
-                    var clientContext = clientKit.context;
-                    if (clientContext != null && clientContext.CheckStatus())
-                        return true;
-                }
-#endif
+#if OSVR_SDK
+                return ActiveVRDevice != null && ActiveVRDevice is OSVRManager;
+#else
 
                 return false;
+#endif
             }
         }
 
@@ -164,8 +181,8 @@ namespace Demonixis.Toolbox.VR
         {
             get
             {
-#if USE_OPENVR_SDK
-                return VRSettings.enabled && Valve.VR.OpenVR.IsHmdPresent();
+#if OPENVR_SDK
+                return ActiveVRDevice != null && ActiveVRDevice is OpenVRManager;
 #else
 
                 return false;
@@ -178,8 +195,8 @@ namespace Demonixis.Toolbox.VR
         /// </summary>
         public static void Recenter()
         {
-            if (activeManager != null)
-                activeManager.Recenter();
+            if (s_ActiveVRDevice != null)
+                s_ActiveVRDevice.Recenter();
         }
 
         /// <summary>
@@ -189,21 +206,21 @@ namespace Demonixis.Toolbox.VR
         {
             get
             {
-                if (activeManager == null)
+                if (s_ActiveVRDevice == null)
                     return 1.0f;
 
-                return activeManager.RenderScale;
+                return s_ActiveVRDevice.RenderScale;
             }
             set
             {
-                if (activeManager != null)
-                    activeManager.RenderScale = value;
+                if (s_ActiveVRDevice != null)
+                    s_ActiveVRDevice.RenderScale = value;
             }
         }
 
         /// <summary>
         /// Indicates if UnityEngine.VR is enabled.
-        /// If a device is connected, it'll return true for PSVR, Oculus and OpenVR.
+        /// If a device is connected, it'll return true for PSVR, OCULUS_SDK and OpenVR.
         /// </summary>
         public static bool UnityVREnabled
         {
@@ -220,7 +237,7 @@ namespace Demonixis.Toolbox.VR
         /// </summary>
         public static bool VREnabled
         {
-            get { return activeManager != null; }
+            get { return s_ActiveVRDevice != null; }
         }
 
         /// <summary>
@@ -228,9 +245,9 @@ namespace Demonixis.Toolbox.VR
         /// </summary>
         public static VRDeviceType VRDeviceType
         {
-            get { return activeManager != null ? activeManager.VRDeviceType : VRDeviceType.None; }
+            get { return s_ActiveVRDevice != null ? s_ActiveVRDevice.VRDeviceType : VRDeviceType.None; }
         }
 
-        #endregion
+#endregion
     }
 }
