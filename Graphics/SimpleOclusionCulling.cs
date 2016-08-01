@@ -16,6 +16,9 @@ namespace Demonixis.Toolbox.Graphics
         private GameObject[] _containers = null;
 
         [SerializeField]
+        private GameObject[] _excluedContainers = null;
+
+        [SerializeField]
         private float _fieldOfView = 120.0f;
 
         [SerializeField]
@@ -58,6 +61,21 @@ namespace Demonixis.Toolbox.Graphics
 
             for (i = 0; i < size; i++)
                 list.AddRange(_containers[i].GetComponentsInChildren<Renderer>());
+
+            if (_excluedContainers != null)
+            {
+                Renderer[] exclued = null;
+                int j = 0;
+                int size2 = 0;
+
+                for (i = 0; i < size; i++)
+                {
+                    exclued = _excluedContainers[i].GetComponentsInChildren<Renderer>();
+
+                    for (j = 0, size2 = exclued.Length; j < size2; j++)
+                        list.Remove(exclued[j]);
+                }
+            }
 
             _renderers = list.ToArray();
             _count = _renderers.Length;

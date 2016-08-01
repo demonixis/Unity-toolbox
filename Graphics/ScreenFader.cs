@@ -14,10 +14,13 @@ namespace Demonixis.Toolbox.Graphics
         }
 
         private static ScreenFader[] s_faders;
-        private bool _enabled = false;
+        private bool _isFading = false;
         private short _sign = 1;
         private ScreenOverlay _overlay;
         private float fadeSpeed = 0.5f;
+
+        private Canvas _canvas = null;
+        private bool _canvasWasSwitched = false;
 
         ///
         /// Gets or sets the overlay intensity.
@@ -32,6 +35,8 @@ namespace Demonixis.Toolbox.Graphics
 
         [SerializeField]
         private bool _fadeOnStart = true;
+        [SerializeField]
+        private string _mainCanvasTag = "MainUI";
 
         #region GameState Pattern
 
@@ -51,20 +56,23 @@ namespace Demonixis.Toolbox.Graphics
 
         void Update()
         {
-            if (_enabled)
+            if (_isFading)
             {
-                _overlay.intensity += fadeSpeed * (Time.deltaTime > 0 ? Time.deltaTime : Time.unscaledDeltaTime) * _sign;
+                _overlay.intensity += fadeSpeed * (Time.deltaTime > 0 ? Time.deltaTime : Mathf.Clamp(Time.unscaledDeltaTime, 0, 0.2f)) * _sign;
 
                 if ((_sign == 1 && _overlay.intensity >= 1) || (_sign == -1 && _overlay.intensity <= 0))
                 {
                     _overlay.intensity = _sign == 1 ? 1 : 0;
-                    _enabled = false;
+                    _isFading = false;
 
                     if (_overlay.intensity <= 0)
                         _overlay.enabled = false;
 
                     if (FadeCompleted != null)
                         FadeCompleted();
+
+                    if (_sign == -1)
+                        SwitchCanvasMode(false);
                 }
             }
         }
@@ -90,6 +98,33 @@ namespace Demonixis.Toolbox.Graphics
                 }
 
                 _overlay.enabled = false;
+
+                var canvasGo = GameObject.FindWithTag(_mainCanvasTag);
+                if (canvasGo != null)
+                    _canvas = canvasGo.GetComponent<Canvas>();
+            }
+        }
+
+        /// <summary>
+        /// Switches the current main canvas to screenspace camera only if it uses the ScreenSpaceOverlay mode.
+        /// </summary>
+        /// <param name="switchToScreenSpace"></param>
+        private void SwitchCanvasMode(bool switchToScreenSpace)
+        {
+            if (UnityEngine.VR.VRSettings.enabled || _canvas == null)
+                return;
+
+            if (switchToScreenSpace && _canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            {
+                _canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                _canvas.worldCamera = Camera.main;
+                _canvasWasSwitched = true;
+            }
+            else if (_canvasWasSwitched)
+            {
+                _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                _canvas.worldCamera = null;
+                _canvasWasSwitched = false;
             }
         }
 
@@ -98,14 +133,16 @@ namespace Demonixis.Toolbox.Graphics
             _sign = sign;
             _overlay.intensity = _sign == 1 ? 0 : 1;
             _overlay.enabled = true;
-            _enabled = true;
+            _isFading = true;
+            SwitchCanvasMode(true);
         }
 
         public void StopFade()
         {
-            _enabled = false;
+            _isFading = false;
             _overlay.enabled = false;
             _overlay.intensity = _sign == 1 ? 0 : 1;
+            SwitchCanvasMode(false);
         }
 
         public static void FadeIn(float fadeSpeed = 2.5f, Action fadeCompleted = null)
@@ -116,6 +153,17 @@ namespace Demonixis.Toolbox.Graphics
         public static void FadeOut(float fadeSpeed = 2.5f, Action fadeCompleted = null)
         {
             Fade(1, fadeSpeed, fadeCompleted);
+        }
+
+        public static void FadeOutIn(float fadeSpeed = 2.5f, Action onFadeOut = null, Action onFadeIn = null)
+        {
+            FadeOut(fadeSpeed, () =>
+            {
+                if (onFadeOut != null)
+                    onFadeOut();
+
+                FadeIn(fadeSpeed, onFadeIn);
+            });
         }
 
         public static void Reset(bool fill)
@@ -151,6 +199,17 @@ namespace Demonixis.Toolbox.Graphics
 
             for (int i = 0, l = s_faders.Length; i < l; i++)
                 s_faders[i]._overlay.texture = texture;
+        }
+
+        public static bool IsFading()
+        {
+            if (s_faders == null)
+                s_faders = FindObjectsOfType<ScreenFader>();
+
+            if (s_faders.Length == 0)
+                return false;
+
+            return s_faders[0]._isFading;
         }
 
         private static void Fade(short sign, float fadeSpeed = 2.5f, Action fadeCompleted = null)
