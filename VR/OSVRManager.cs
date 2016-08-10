@@ -1,4 +1,7 @@
-﻿using OSVR.Unity;
+﻿/// GameVRSettings
+/// Last Modified Date: 08/10/2016
+
+using OSVR.Unity;
 using UnityEngine;
 using UnityEngine.VR;
 using System.Collections;
@@ -89,9 +92,6 @@ namespace Demonixis.Toolbox.VR
 
         public override void SetVREnabled(bool isEnabled)
         {
-            if (!IsAvailable)
-                return;
-
             _unityVRWasEnabled = VRSettings.enabled;
             VRSettings.enabled = false;
 

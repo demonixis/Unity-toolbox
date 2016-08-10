@@ -1,11 +1,13 @@
-﻿#if UNITY_ANDROID
+﻿/// GameVRSettings
+/// Last Modified Date: 08/10/2016
+
+#if UNITY_ANDROID
 #define GOOGLE_VR_SDK
-#endif
-#if UNITY_STANDALONE || UNITY_ANDROID
-#define OSVR_SDK
 #define OCULUS_SDK
 #endif
 #if UNITY_STANDALONE
+#define OSVR_SDK_
+#define OCULUS_SDK
 #define OPENVR_SDK
 #endif
 
@@ -136,8 +138,12 @@ namespace Demonixis.Toolbox.VR
         {
             get
             {
+#if UNITY_ANDROID
+                if (VRSettings.enabled && VRSettings.loadedDeviceName == "Oculus")
+                    return false;
 #if GOOGLE_VR_SDK
                 return ActiveVRDevice != null && ActiveVRDevice is GoogleVRManager;
+#endif
 #endif
                 return false;
             }
@@ -151,7 +157,7 @@ namespace Demonixis.Toolbox.VR
             get
             {
 #if OCULUS_SDK
-                return ActiveVRDevice != null && ActiveVRDevice is OculusManager;
+                return VRSettings.enabled && VRSettings.loadedDeviceName == "Oculus";
 #else
                 return false;
 #endif
@@ -166,7 +172,7 @@ namespace Demonixis.Toolbox.VR
             get
             {
 #if OSVR_SDK
-                return ActiveVRDevice != null && ActiveVRDevice is OSVRManager;
+                return OSVRManager.Detect;
 #else
 
                 return false;
@@ -182,7 +188,7 @@ namespace Demonixis.Toolbox.VR
             get
             {
 #if OPENVR_SDK
-                return ActiveVRDevice != null && ActiveVRDevice is OpenVRManager;
+                return VRSettings.enabled && VRSettings.loadedDeviceName == "OpenVR";
 #else
 
                 return false;

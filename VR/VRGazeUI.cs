@@ -1,4 +1,7 @@
-﻿#define USE_DOTTWEEN
+﻿/// GameVRSettings
+/// Last Modified Date: 08/10/2016
+
+#define USE_DOTTWEEN
 #if USE_DOTTWEEN
 using DG.Tweening;
 #endif

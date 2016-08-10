@@ -1,4 +1,7 @@
-﻿using UnityEngine;
+﻿/// GameVRSettings
+/// Last Modified Date: 08/10/2016
+
+using UnityEngine;
 using UnityEngine.VR;
 using Valve.VR;
 
@@ -9,6 +12,7 @@ namespace Demonixis.Toolbox.VR
     /// </summary>
     public sealed class OpenVRManager : UnityVRDevice
     {
+        private const string UnityVR_Name = "OpenVR";
         private SteamVR_Camera steamCamera = null;
 
         #region Inspector Fields
@@ -27,26 +31,28 @@ namespace Demonixis.Toolbox.VR
 
         public override bool IsEnabled
         {
-            get { return VRSettings.enabled && OpenVR.IsHmdPresent(); }
+            get { return Detect; }
         }
 
         public override bool IsAvailable
         {
-            get { return VRDevice.isPresent && OpenVR.IsHmdPresent(); }
+            get { return VRDevice.isPresent && VRSettings.loadedDeviceName == UnityVRName; }
         }
 
         public override string UnityVRName
         {
-            get { return "OpenVR"; }
+            get { return UnityVR_Name; }
+        }
+
+        public static bool Detect
+        {
+            get { return VRSettings.enabled && VRSettings.loadedDeviceName == UnityVR_Name; }
         }
 
         #endregion
 
         public override void SetVREnabled(bool isEnabled)
         {
-            if (!IsAvailable)
-                return;
-
             if (steamCamera == null)
             {
                 var playerObject = GameObject.FindWithTag("Player");

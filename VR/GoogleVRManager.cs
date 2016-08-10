@@ -1,4 +1,7 @@
-﻿using System;
+﻿/// GameVRSettings
+/// Last Modified Date: 08/10/2016
+
+using System;
 using UnityEngine;
 
 namespace Demonixis.Toolbox.VR

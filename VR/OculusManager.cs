@@ -1,4 +1,7 @@
-﻿using System;
+﻿/// GameVRSettings
+/// Last Modified Date: 08/10/2016
+
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.VR;
@@ -10,6 +13,7 @@ namespace Demonixis.Toolbox.VR
     /// </summary>
     public sealed class OculusManager : UnityVRDevice
     {
+        private static string UnityVR_Name = "Oculus";
         private OVRManager ovrManager = null;
 
         #region Inspector Fields
@@ -56,26 +60,28 @@ namespace Demonixis.Toolbox.VR
 
         public override bool IsEnabled
         {
-            get { return VRSettings.enabled && OVRManager.isHmdPresent; }
+            get { return Detect; }
         }
 
         public override bool IsAvailable
         {
-            get { return VRDevice.isPresent && OVRManager.isHmdPresent; }
+            get { return VRDevice.isPresent && VRSettings.loadedDeviceName == UnityVR_Name; }
         }
 
         public override string UnityVRName
         {
-            get { return "Oculus"; }
+            get { return UnityVR_Name; }
+        }
+
+        public static bool Detect
+        {
+            get { return VRSettings.enabled && VRSettings.loadedDeviceName == UnityVR_Name; }
         }
 
         #endregion
 
         public override void SetVREnabled(bool isEnabled)
         {
-            if (!IsAvailable)
-                return;
-
 #if UNITY_ANDROID
             if (QualitySettings.vSyncCount != 0)
                 QualitySettings.vSyncCount = 0;

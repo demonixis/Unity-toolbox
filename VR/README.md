@@ -13,19 +13,22 @@ This namespace contains an abstraction of few VR SDKs. Without any code, it's ea
 ## Setup
 Your player object **must** respect the same hierarchy as the Oculus SDK Camera Rig prefab.
 
+```
 Player (`GameObject`)
-* Head (`Transform`)
-* * TrackingSpace (`Transform`)
-* * * EyeCenterAnchor (`Camera`)
-            
+- Head (`Transform`)
+-- TrackingSpace (`Transform`)
+--- EyeCenterAnchor (`Camera`)
+```       
+  
 All scripts can be put on the `GameObject` of you choice because they use the `Camera.main` helper to find the **Main Camera**. However I recommand you to put them on the Head GameObject.
 
 Note that you can change the Transform of the Head object. It's not recommanded to change the TrackingSpace Transform. Finally the MainCamera Transform is overrided by Unity or the VR SDK with the HMD's rotations & positions.
 
 If you don't want to use a specific SDK, just remove the adapted `define` in `GameVRSettings`.
 - `GOOGLE_VR_SDK`
-- `OSVR_SDK`
+- `OCULUS_SDK`
 - `OPENVR_SDK`
+- `OSVR_SDK`
 
 ## Using it
 
