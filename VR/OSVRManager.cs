@@ -31,11 +31,7 @@ namespace Demonixis.Toolbox.VR
 
         public override bool IsAvailable
         {
-            get
-            {
-                var clientKit = ClientKit.instance;
-                return clientKit != null && clientKit.context != null && clientKit.context.CheckStatus();
-            }
+            get { return Detect; }
         }
 
         public override VRDeviceType VRDeviceType
@@ -47,6 +43,15 @@ namespace Demonixis.Toolbox.VR
         {
             get { return 1.0f; }
             set { }
+        }
+
+        public static bool Detect
+        {
+            get
+            {
+                var clientKit = ClientKit.instance;
+                return clientKit != null && clientKit.context != null && clientKit.context.CheckStatus();
+            }
         }
 
         [SerializeField]

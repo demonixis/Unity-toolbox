@@ -2,7 +2,7 @@
 /// Last Modified Date: 08/10/2016
 
 #if UNITY_ANDROID
-#define GOOGLE_VR_SDK
+#define GOOGLE_VR_SDK_
 #define OCULUS_SDK
 #endif
 #if UNITY_STANDALONE

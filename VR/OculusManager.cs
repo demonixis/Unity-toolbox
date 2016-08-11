@@ -27,8 +27,6 @@ namespace Demonixis.Toolbox.VR
         private bool _usePositionTracking = true;
         [SerializeField]
         private bool _resetTrackerOnLoad = false;
-        [SerializeField]
-        private bool _addControllersNode = false;
         [Tooltip("You can attach the OVRTrackerBounds to a disabled GameObject. It'll be parented to the main camera.")]
         [SerializeField]
         private Transform _trackerBounds = null;
@@ -140,9 +138,6 @@ namespace Demonixis.Toolbox.VR
         private void CreateDefaultStructure(Transform player, Transform trackingSpace)
         {
             CreateNode(player, "ForwardDirection");
-
-            if (_addControllersNode)
-                CreateNode(player, "OVR_Controllers");
 
             var anchorNames = new string[]
             {
