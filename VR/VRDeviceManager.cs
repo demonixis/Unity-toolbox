@@ -1,5 +1,5 @@
 ﻿/// GameVRSettings
-/// Last Modified Date: 08/10/2016
+/// Last Modified Date: 08/16/2016
 
 using System;
 using System.Collections;
@@ -152,6 +152,22 @@ namespace Demonixis.Toolbox.VR
                 return 1;
 
             return 0;
+        }
+
+        protected static void CopyComponent(Component component, GameObject destination, bool destroy = true)
+        {
+            if (component == null)
+                return;
+
+            var type = component.GetType();
+            var copy = destination.AddComponent(type);
+            var fields = type.GetFields();
+
+            for (int i = 0, l = fields.Length; i < l; i++)
+                fields[i].SetValue(copy, fields[i].GetValue(component));
+
+            if (destroy)
+                Destroy(component);
         }
     }
 }

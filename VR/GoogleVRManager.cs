@@ -2,6 +2,7 @@
 /// Last Modified Date: 08/16/2016
 
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace Demonixis.Toolbox.VR
@@ -9,6 +10,17 @@ namespace Demonixis.Toolbox.VR
     public class GoogleVRManager : VRDeviceManager
     {
         private GvrViewer gvrViewer = null;
+
+        #region Editor Fields
+
+        [Tooltip("Add the name of the components you want to copy on the created cameras. Usefull for post processes.")]
+        [SerializeField]
+        private string[] _cameraComponentsToKeep = null;
+        [Tooltip("Add the name of the components you want to remove from the main camera. Usefull for unused post processes.")]
+        [SerializeField]
+        private string[] _cameraComponentsToRemove = null;
+
+        #endregion
 
         #region Public Fields
 
@@ -79,7 +91,12 @@ namespace Demonixis.Toolbox.VR
                 return;
 
             if (gvrViewer == null)
-                gvrViewer = Camera.main.gameObject.AddComponent<GvrViewer>();
+            {
+                var camera = Camera.main.gameObject;
+                gvrViewer = camera.AddComponent<GvrViewer>();
+
+                StartCoroutine(MoveUsefullCameraComponents(camera));
+            }
 
             gvrViewer.VRModeEnabled = isEnabled;
         }
@@ -90,6 +107,24 @@ namespace Demonixis.Toolbox.VR
             if (gvrViewer != null)
                 gvrViewer.Recenter();
 #endif
+        }
+
+        private IEnumerator MoveUsefullCameraComponents(GameObject camera)
+        {
+            if (_cameraComponentsToKeep != null)
+            {
+                yield return new WaitForSeconds(0.5f);
+
+                var postRender = camera.GetComponentInChildren<GvrPostRender>();
+
+                for (int i = 0, l = _cameraComponentsToKeep.Length; i < l; i++)
+                    CopyComponent(camera.GetComponent(_cameraComponentsToKeep[i]), postRender.gameObject);
+            }
+
+            for (int i = 0, l = _cameraComponentsToRemove.Length; i < l; i++)
+                Destroy(GetComponent(_cameraComponentsToRemove[i]));
+
+            yield return null;
         }
     }
 }
