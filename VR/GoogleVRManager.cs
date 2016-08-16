@@ -1,5 +1,5 @@
 ﻿/// GameVRSettings
-/// Last Modified Date: 08/10/2016
+/// Last Modified Date: 08/16/2016
 
 using System;
 using UnityEngine;
@@ -31,22 +31,29 @@ namespace Demonixis.Toolbox.VR
 
         public override bool IsAvailable
         {
+            get { return Detect; }
+        }
+
+        public static bool Detect
+        {
             get
             {
-#if UNITY_ANDROID
-                // Don't load if if the GearVR mode is enabled.
-                // Must be changed when Unity will supports DayDream
-                return !UnityEngine.VR.VRDevice.isPresent && IsSupported;
+#if UNITY_EDITOR
+                return true;
 #else
-                return false;
+                return !UnityEngine.VR.VRDevice.isPresent && UnityEngine.SystemInfo.supportsGyroscope;
 #endif
             }
         }
 
         public override float RenderScale
         {
-            get { return GvrViewer.Instance.StereoScreenScale; }
-            set { GvrViewer.Instance.StereoScreenScale = value; }
+            get { return gvrViewer != null ? gvrViewer.StereoScreenScale : 1.0f; }
+            set
+            {
+                if (gvrViewer != null)
+                    gvrViewer.StereoScreenScale = value;
+            }
         }
 
         public override VRDeviceType VRDeviceType
@@ -56,7 +63,7 @@ namespace Demonixis.Toolbox.VR
 
         public override Vector3 HeadPosition
         {
-            get { return Vector3.zero; }
+            get { return gvrViewer != null ? gvrViewer.HeadPose.Position : Vector3.zero; }
         }
 
         #endregion
@@ -72,14 +79,7 @@ namespace Demonixis.Toolbox.VR
                 return;
 
             if (gvrViewer == null)
-            {
-                var camera = Camera.main.gameObject;
-                var parent = camera.transform.parent.gameObject;
-
-                camera.AddComponent<StereoController>();
-                parent.AddComponent<GvrHead>();
-                gvrViewer = gameObject.AddComponent<GvrViewer>();
-            }
+                gvrViewer = Camera.main.gameObject.AddComponent<GvrViewer>();
 
             gvrViewer.VRModeEnabled = isEnabled;
         }
@@ -87,7 +87,8 @@ namespace Demonixis.Toolbox.VR
         public override void Recenter()
         {
 #if UNITY_ANDROID
-            GvrViewer.Instance.Recenter();
+            if (gvrViewer != null)
+                gvrViewer.Recenter();
 #endif
         }
     }

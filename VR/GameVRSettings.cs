@@ -1,5 +1,5 @@
 ﻿/// GameVRSettings
-/// Last Modified Date: 08/10/2016
+/// Last Modified Date: 08/16/2016
 
 #if UNITY_ANDROID
 #define GOOGLE_VR_SDK_
@@ -18,17 +18,6 @@ using UnityEngine.VR;
 
 namespace Demonixis.Toolbox.VR
 {
-    /// <summary>
-    /// Defines the type of SDK.
-    /// </summary>
-    public enum VRDeviceType
-    {
-        None = 0,
-        GoogleVR,
-        UnityVR,
-        OSVR
-    }
-
     /// <summary>
     /// The GameVRSettings is responsible to check available VR devices and select the one with the higher priority.
     /// It's also used to Recenter the view.

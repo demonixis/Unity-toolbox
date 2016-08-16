@@ -8,6 +8,17 @@ using UnityEngine;
 namespace Demonixis.Toolbox.VR
 {
     /// <summary>
+    /// Defines the type of SDK.
+    /// </summary>
+    public enum VRDeviceType
+    {
+        None = 0,
+        GoogleVR,
+        UnityVR,
+        OSVR
+    }
+
+    /// <summary>
     /// The VR Device Manager will create all the structure and add required scripts
     /// to bring VR support to a specific type of HMD. 
     /// </summary>
