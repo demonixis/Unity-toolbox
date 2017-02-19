@@ -2,17 +2,18 @@
 /// Last Modified Date: 08/10/2016
 
 using UnityEngine;
+#if UNITY_STANDALONE
 using UnityEngine.VR;
-using Valve.VR;
+#endif
 
 namespace Demonixis.Toolbox.VR
 {
     /// <summary>
     /// OpenVRManager is responsible to create the structure of the player using the OpenVR SDK. There are also some options to tweak the player.
     /// </summary>
-    public sealed class OpenVRManager : UnityVRDevice
+    public sealed class OpenVRDevice : UnityVRDevice
     {
-        private const string UnityVR_Name = "OpenVR";
+        public const string UnityVR_Name = "OpenVR";
         private SteamVR_Camera steamCamera = null;
 
         #region Inspector Fields
@@ -29,30 +30,29 @@ namespace Demonixis.Toolbox.VR
 
         #region Public Fields
 
-        public override bool IsEnabled
-        {
-            get { return Detect; }
-        }
-
         public override bool IsAvailable
         {
-            get { return VRDevice.isPresent && VRSettings.loadedDeviceName == UnityVRName; }
-        }
-
-        public override string UnityVRName
-        {
-            get { return UnityVR_Name; }
+#if UNITY_STANDALONE
+            get { return VRDevice.isPresent && VRSettings.loadedDeviceName == UnityVR_Name; }
+#else
+            get { return false; }
+#endif
         }
 
         public static bool Detect
         {
+#if UNITY_STANDALONE
             get { return VRSettings.enabled && VRSettings.loadedDeviceName == UnityVR_Name; }
+#else
+            get { return false; }
+#endif
         }
 
         #endregion
 
-        public override void SetVREnabled(bool isEnabled)
+        public override void SetActive(bool isEnabled)
         {
+#if UNITY_STANDALONE
             if (steamCamera == null)
             {
                 var playerObject = GameObject.FindWithTag("Player");
@@ -61,8 +61,7 @@ namespace Demonixis.Toolbox.VR
                 var head = trackingSpace != null ? trackingSpace.parent : trackingSpace;
 
                 // We store the head transform and its initial position for future calibrations.
-                m_headTransform = head.GetComponent<Transform>();
-                m_originalHeadPosition = m_headTransform.localPosition;
+                m_headTransform = GetComponent<Transform>();
 
                 if (playerObject == null || trackingSpace == null)
                     throw new UnityException("[OpenVRManager] Your prefab doesn't respect the correct hierarchy");
@@ -101,16 +100,15 @@ namespace Demonixis.Toolbox.VR
                     playArea.AddComponent<SteamVR_PlayArea>();
                 }
 
-                if (_fixHeadPosition)
-                    StartCoroutine(ResetHeadPosition(0.5f));
-                else
-                    m_headTransform.localPosition = Vector3.zero;
-
+                m_headTransform.localPosition = Vector3.zero;
                 m_headTransform.localRotation = Quaternion.identity;
             }
 
             VRSettings.enabled = isEnabled;
+#endif
         }
+
+#if UNITY_STANDALONE
 
         private GameObject CreateController(Transform parent, string name)
         {
@@ -136,5 +134,6 @@ namespace Demonixis.Toolbox.VR
 
             return null;
         }
+#endif
     }
 }

@@ -1,22 +1,24 @@
 ﻿/// GameVRSettings
 /// Last Modified Date: 08/10/2016
 
-using System;
-using System.Collections;
 using UnityEngine;
+#if UNITY_STANDALONE_WIN || UNITY_ANDROID
 using UnityEngine.VR;
+#endif
 
 namespace Demonixis.Toolbox.VR
 {
     /// <summary>
     /// OculusManager - Manages all aspect of the VR from this singleton.
     /// </summary>
-    public sealed class OculusManager : UnityVRDevice
+    public sealed class OculusDevice : UnityVRDevice
     {
-        private static string UnityVR_Name = "Oculus";
-        private OVRManager ovrManager = null;
+        private const string UnityVR_Name = "Oculus";
 
-        #region Inspector Fields
+#if UNITY_STANDALONE_WIN || UNITY_ANDROID
+        private OVRManager ovrManager = null;
+#endif
+#region Inspector Fields
 
         [Header("Oculus SDK Settings")]
         [SerializeField]
@@ -34,17 +36,21 @@ namespace Demonixis.Toolbox.VR
         [SerializeField]
         private GameObject _trackerBoundsPrefab = null;
 
-        #endregion
+#endregion
 
-        #region Public Fields
+#region Public Fields
 
         /// <summary>
         /// Gets or sets the CPU level (Android only)
         /// </summary>
         public int CPULevel
         {
+#if UNITY_STANDALONE_WIN || UNITY_ANDROID
             get { return OVRPlugin.cpuLevel; }
             set { OVRPlugin.cpuLevel = value; }
+#else
+            get; set;
+#endif
         }
 
         /// <summary>
@@ -52,40 +58,43 @@ namespace Demonixis.Toolbox.VR
         /// </summary>
         public int GPULevel
         {
+#if UNITY_STANDALONE_WIN || UNITY_ANDROID
             get { return OVRPlugin.gpuLevel; }
             set { OVRPlugin.gpuLevel = value; }
-        }
-
-        public override bool IsEnabled
-        {
-            get { return Detect; }
+#else
+            get; set;
+#endif
         }
 
         public override bool IsAvailable
         {
+#if UNITY_STANDALONE_WIN || UNITY_ANDROID
             get { return VRDevice.isPresent && VRSettings.loadedDeviceName == UnityVR_Name; }
-        }
-
-        public override string UnityVRName
-        {
-            get { return UnityVR_Name; }
+#else
+            get { return false; }
+#endif
         }
 
         public static bool Detect
         {
+#if UNITY_STANDALONE_WIN || UNITY_ANDROID
             get { return VRSettings.enabled && VRSettings.loadedDeviceName == UnityVR_Name; }
+#else
+            get { return false; }
+#endif
         }
 
-        #endregion
+#endregion
 
-        public override void SetVREnabled(bool isEnabled)
+        public override void SetActive(bool active)
         {
 #if UNITY_ANDROID
             if (QualitySettings.vSyncCount != 0)
                 QualitySettings.vSyncCount = 0;
 #endif
 
-            if (isEnabled && ovrManager == null)
+#if UNITY_STANDALONE_WIN || UNITY_ANDROID
+            if (active && ovrManager == null)
             {
                 var camera = Camera.main.GetComponent<Transform>();
                 camera.name = "CenterEyeAnchor";
@@ -98,41 +107,42 @@ namespace Demonixis.Toolbox.VR
 
                 var head = trackingSpace.parent.gameObject;
                 head.name = "OVRCameraRig";
-                head.AddComponent<OVRCameraRig>();
 
-                // We store the head transform and its initial position for future calibrations.
-                m_headTransform = head.GetComponent<Transform>();
-                m_originalHeadPosition = m_headTransform.localPosition;
-
-                ovrManager = head.AddComponent<OVRManager>();
-                ovrManager.queueAhead = _queueAhead;
-                ovrManager.trackingOriginType = _trackingOriginType;
-                ovrManager.usePositionTracking = _usePositionTracking;
-                ovrManager.resetTrackerOnLoad = _resetTrackerOnLoad;
-
-                if (_trackerBoundsPrefab != null)
+                if (head.GetComponent<OVRCameraRig>() == null)
                 {
-                    var trackerBoundsGO = Instantiate<GameObject>(_trackerBoundsPrefab);
-                    trackerBoundsGO.name = "TrackerBounds";
-                    var trackerBoundsTransform = trackerBoundsGO.GetComponent<Transform>();
-                    trackerBoundsTransform.parent = camera;
-                    trackerBoundsTransform.localPosition = Vector3.zero;
-                    trackerBoundsTransform.localRotation = Quaternion.identity;
-                }
-                else if (_trackerBounds != null)
-                {
-                    _trackerBounds.parent = camera;
-                    _trackerBounds.localPosition = Vector3.zero;
-                    _trackerBounds.localRotation = Quaternion.identity;
-                }
+                    head.AddComponent<OVRCameraRig>();
 
-                if (_fixHeadPosition)
-                    StartCoroutine(ResetHeadPosition(0.5f));
+                    // We store the head transform and its initial position for future calibrations.
+                    m_headTransform = head.GetComponent<Transform>();
 
-                CreateDefaultStructure(head.transform.parent, trackingSpace);
+                    ovrManager = head.AddComponent<OVRManager>();
+                    ovrManager.queueAhead = _queueAhead;
+                    ovrManager.trackingOriginType = _trackingOriginType;
+                    ovrManager.usePositionTracking = _usePositionTracking;
+                    ovrManager.resetTrackerOnLoad = _resetTrackerOnLoad;
+
+                    if (_trackerBoundsPrefab != null)
+                    {
+                        var trackerBoundsGO = Instantiate<GameObject>(_trackerBoundsPrefab);
+                        trackerBoundsGO.name = "TrackerBounds";
+                        var trackerBoundsTransform = trackerBoundsGO.GetComponent<Transform>();
+                        trackerBoundsTransform.parent = camera;
+                        trackerBoundsTransform.localPosition = Vector3.zero;
+                        trackerBoundsTransform.localRotation = Quaternion.identity;
+                    }
+                    else if (_trackerBounds != null)
+                    {
+                        _trackerBounds.parent = camera;
+                        _trackerBounds.localPosition = Vector3.zero;
+                        _trackerBounds.localRotation = Quaternion.identity;
+                    }
+
+                    CreateDefaultStructure(head.transform.parent, trackingSpace);
+                }
             }
 
-            VRSettings.enabled = isEnabled;
+            VRSettings.enabled = active;
+#endif
         }
 
         private void CreateDefaultStructure(Transform player, Transform trackingSpace)

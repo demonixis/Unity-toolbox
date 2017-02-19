@@ -1,7 +1,6 @@
-﻿/// GameVRSettings
-/// Last Modified Date: 08/10/2016
+﻿/// UnityVRDevice
+/// Last Modified Date: 01/07/2017
 
-using System;
 using UnityEngine;
 using UnityEngine.VR;
 
@@ -10,7 +9,7 @@ namespace Demonixis.Toolbox.VR
     /// <summary>
     /// The UnityVRDevice is an abstract device that uses the UnityEngine.VR implementation.
     /// </summary>
-    public abstract class UnityVRDevice : VRDeviceManager
+    public class UnityVRDevice : VRDeviceBase
     {
         #region Public Fields
 
@@ -18,6 +17,16 @@ namespace Demonixis.Toolbox.VR
         {
             get { return VRSettings.renderScale; }
             set { VRSettings.renderScale = value; }
+        }
+
+        public override int EyeTextureWidth
+        {
+            get { return VRSettings.eyeTextureWidth; }
+        }
+
+        public override int EyeTextureHeight
+        {
+            get { return VRSettings.eyeTextureHeight; }
         }
 
         public override VRDeviceType VRDeviceType
@@ -30,6 +39,11 @@ namespace Demonixis.Toolbox.VR
             get { return InputTracking.GetLocalPosition(VRNode.Head); }
         }
 
+        public override bool IsAvailable
+        {
+            get { return VRSettings.enabled; }
+        }
+
         #endregion
 
         public override void Recenter()
@@ -37,27 +51,9 @@ namespace Demonixis.Toolbox.VR
             InputTracking.Recenter();
         }
 
-        public override int CompareTo(object obj)
+        public override void SetActive(bool active)
         {
-            var other = obj as VRDeviceManager;
-
-            if (other == null)
-                return -1;
-
-            // We use the default Unity's sorting
-            if (other.UnityVRName != string.Empty)
-            {
-                var names = VRSettings.supportedDevices;
-                var thisIndex = Array.IndexOf(names, UnityVRName);
-                var otherIndex = Array.IndexOf(names, other.UnityVRName);
-
-                if (otherIndex > thisIndex)
-                    return -1;
-                else
-                    return 1;
-            }
-
-            return base.CompareTo(obj);
+            VRSettings.enabled = active;
         }
     }
 }

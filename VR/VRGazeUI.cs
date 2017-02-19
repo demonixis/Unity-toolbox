@@ -53,14 +53,16 @@ namespace Demonixis.Toolbox.VR
             if (EventSystem.current == null)
                 throw new UnityException("[VRGazeUI] EventSystem is null.");
 
-            var scaling = GameVRSettings.RenderScale;
+            var scaling = VRManager.RenderScale;
             var screenCenter = new Vector2(Screen.width * 0.5f * scaling, Screen.height * 0.5f * scaling);
 
+#if UNITY_STANDALONE_WIN || UNITY_ANDROID
             if (UnityEngine.VR.VRSettings.enabled)
             {
                 screenCenter.x = UnityEngine.VR.VRSettings.eyeTextureWidth * 0.5f * scaling;
                 screenCenter.y = UnityEngine.VR.VRSettings.eyeTextureHeight * 0.5f * scaling;
             }
+#endif
 
             m_eventSystem = EventSystem.current;
             m_pointer = new PointerEventData(m_eventSystem);
@@ -112,7 +114,7 @@ namespace Demonixis.Toolbox.VR
 
             for (int i = 0, l = m_inputCallbacks.Count; i < l; i++)
                 hasClicked |= m_inputCallbacks[i]();
-    
+
             return hasClicked;
         }
 
