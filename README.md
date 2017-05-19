@@ -14,7 +14,6 @@ The Demonixis' Toolbox is a collection of useful scripts for Unity 3D.
 - Translation
 - UI
 - Utilities
-- Virtual Reality
 
 ## Games using this toolkit
 
