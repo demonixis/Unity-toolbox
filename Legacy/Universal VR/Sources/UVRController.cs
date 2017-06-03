@@ -33,11 +33,11 @@ namespace Demonixis.VR
         void Start()
         {
             _headTransform = UVRManager.SDK.head;
-            _playerTransform = GetComponent(typeof(Transform)) as Transform;
+            _playerTransform = GetComponent<Transform>();
 
             // Gets the first eye.
-            var cam = GetComponentInChildren(typeof(Camera)) as Camera;
-            _eyePosition = cam.GetComponent(typeof(Transform)) as Transform;
+            var cam = GetComponentInChildren<Camera>();
+            _eyePosition = cam.GetComponent<Transform>();
 
             // Build the socle object.
             if (socle == null)
@@ -45,15 +45,15 @@ namespace Demonixis.VR
                 socle = GameObject.CreatePrimitive(PrimitiveType.Quad);
                 socle.name = "UVR_Socle";
 
-                _socleTransform = socle.GetComponent(typeof(Transform)) as Transform;
+                _socleTransform = socle.GetComponent<Transform>();
                 _socleTransform.parent = _playerTransform;
 
                 Destroy(socle.GetComponent<Collider>());
-                var socleCollider = socle.AddComponent(typeof(BoxCollider)) as BoxCollider;
+                var socleCollider = socle.AddComponent<BoxCollider>();
                 socleCollider.isTrigger = true;
             }
             else
-                _socleTransform = socle.GetComponent(typeof(Transform)) as Transform;
+                _socleTransform = socle.GetComponent<Transform>();
 
             // And the materials.
             if (walkOnMaterial == null)

@@ -18,14 +18,14 @@ namespace Demonixis.VR
 
         void Start()
         {
-            _transform = GetComponent(typeof(Transform)) as Transform;
+            _transform = GetComponent<Transform>();
         }
 
         private void SetLastMaterial()
         {
             RestoreLastMaterial();
 
-            _lastRenderer = _raycastHit.collider.GetComponent(typeof(Renderer)) as Renderer;
+            _lastRenderer = _raycastHit.collider.GetComponent<Renderer>();
 
             if (_lastRenderer != null)
             {

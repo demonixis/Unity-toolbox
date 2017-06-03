@@ -75,13 +75,13 @@ namespace Demonixis.VR
             {
                 if (_instance == null)
                 {
-                    _instance = GameObject.FindObjectOfType(typeof(UVRManager)) as UVRManager;
+                    _instance = FindObjectOfType<UVRManager>();
 
                     if (_instance == null)
                     {
                         Debug.LogWarning("SDK not found. An instance is created...");
                         var go = new GameObject("UVRManager");
-                        _instance = go.AddComponent(typeof(UVRManager)) as UVRManager;
+                        _instance = go.AddComponent<UVRManager>();
                     }
                 }
                 return _instance;
@@ -110,20 +110,12 @@ namespace Demonixis.VR
             Application.targetFrameRate = targetFramerate;
 
             if (head == null)
-                head = GetComponent(typeof(Transform)) as Transform;
+                head = GetComponent<Transform>();
 
             if (warningText != null)
                 warningText.enabled = false;
 
             SetSensor(SensorType.Auto);
-        }
-
-        void Start()
-        {
-#if UNITY_METRO && !UNITY_EDITOR
-            // Because mid/low range of devices has bad GPUs...
-            DistortionCorrection = SystemInfo.supportsGyroscope;
-#endif
         }
 
         void LateUpdate()
@@ -190,17 +182,17 @@ namespace Demonixis.VR
                 DestroyImmediate(_sensor);
 
             if ((sensor == SensorType.Auto && UVRGyroscope.IsAvailable) || sensor == SensorType.Gyroscope)
-                _sensor = gameObject.AddComponent(typeof(UVRGyroscope)) as UVRSensor;
+                _sensor = gameObject.AddComponent<UVRSensor>();
 
             else if ((sensor == SensorType.Auto && UVRInclinometer.IsAvailable) || sensor == SensorType.Inclinometer)
-                _sensor = gameObject.AddComponent(typeof(UVRInclinometer)) as UVRSensor;
+                _sensor = gameObject.AddComponent<UVRSensor>();
 
             else if ((sensor == SensorType.Auto && UVROrientationSensor.IsAvailable) || sensor == SensorType.Orientation)
-                _sensor = gameObject.AddComponent(typeof(UVROrientationSensor)) as UVRSensor;
+                _sensor = gameObject.AddComponent<UVROrientationSensor>();
 
             else
             {
-                _sensor = gameObject.AddComponent(typeof(UVRSensor)) as UVRSensor;
+                _sensor = gameObject.AddComponent<UVRSensor>();
 
                 if (warningText != null)
                 {

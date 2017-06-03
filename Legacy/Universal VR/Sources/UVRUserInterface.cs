@@ -10,9 +10,9 @@ namespace Demonixis.VR
 
         void Start()
         {
-            var cam = UVRManager.SDK.GetComponentInChildren(typeof(Camera)) as Camera;
+            var cam = UVRManager.SDK.GetComponentInChildren<Camera>();
 
-            _rectTransform = GetComponent(typeof(RectTransform)) as RectTransform;
+            _rectTransform = GetComponent<RectTransform>();
             _rectTransform.localScale.Set(0.02f, 0.02f, 0.02f);
             _rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, size);
             _rectTransform.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, size);

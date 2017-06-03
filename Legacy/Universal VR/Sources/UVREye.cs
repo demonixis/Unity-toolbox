@@ -33,10 +33,10 @@ namespace Demonixis.VR
 
         void Awake()
         {
-            _effect = GetComponent(typeof(UVRDistortionCorrectionEffect)) as UVRDistortionCorrectionEffect;
+            _effect = GetComponent<UVRDistortionCorrectionEffect>();
 
             if (_effect == null)
-                _effect = gameObject.AddComponent(typeof(UVRDistortionCorrectionEffect)) as UVRDistortionCorrectionEffect;
+                _effect = gameObject.AddComponent<UVRDistortionCorrectionEffect>();
 
             _effect.isLeftEye = isLeftEye;
             _effect.NeedsUpdate = true;
