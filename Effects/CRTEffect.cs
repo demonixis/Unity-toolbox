@@ -1,35 +1,43 @@
 ﻿using UnityEngine;
-using UnityStandardAssets.ImageEffects;
 
 namespace Demonixis.Effects
 {
+    [ImageEffectAllowedInSceneView]
     [ExecuteInEditMode]
-    public class CRTEffect : PostEffectsBase
+    public class CRTEffect : MonoBehaviour
     {
-        public Shader shader = null;
-        private Material material;
+        private bool m_Supported = true;
+        private Material m_Material;
+
+        [SerializeField]
+        private Shader m_Shader = null;
+
         public float Distortion = 0.1f;
         public float InputGamma = 2.4f;
         public float OutputGamma = 2.2f;
         public float TextureSize = 768f;
 
-        public override bool CheckResources()
+        private void OnRenderImage(RenderTexture sourceTexture, RenderTexture destTexture)
         {
-            return shader.isSupported;
-        }
-
-        void OnRenderImage(RenderTexture sourceTexture, RenderTexture destTexture)
-        {
-            if (material == null)
-                material = new Material(shader);
-
-            if (material != null)
+            if (m_Material == null)
             {
-                material.SetFloat("_Distortion", Distortion);
-                material.SetFloat("_InputGamma", InputGamma);
-                material.SetFloat("_OutputGamma", OutputGamma);
-                material.SetVector("_TextureSize", new Vector2(TextureSize, TextureSize));
-                Graphics.Blit(sourceTexture, destTexture, material);
+                m_Material = new Material(m_Shader);
+
+                if (!m_Shader.isSupported)
+                {
+                    Debug.Log("This shader is not supported.");
+                    enabled = false;
+                    return;
+                }
+            }
+
+            if (m_Material != null)
+            {
+                m_Material.SetFloat("_Distortion", Distortion);
+                m_Material.SetFloat("_InputGamma", InputGamma);
+                m_Material.SetFloat("_OutputGamma", OutputGamma);
+                m_Material.SetVector("_TextureSize", new Vector2(TextureSize, TextureSize));
+                Graphics.Blit(sourceTexture, destTexture, m_Material);
             }
             else
                 Graphics.Blit(sourceTexture, destTexture);

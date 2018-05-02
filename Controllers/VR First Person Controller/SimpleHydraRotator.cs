@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#define HYDRA_
+using UnityEngine;
 
 namespace Demonixis.Toolbox.Controllers
 {
@@ -8,6 +9,7 @@ namespace Demonixis.Toolbox.Controllers
     /// </summary>
     public sealed class SimpleHydraRotator : SimpleAbstractRotator
     {
+#if HYDRA
         private SixenseInput.Controller _controller;
         private float _deadZone = 0.2f;
 
@@ -37,5 +39,10 @@ namespace Demonixis.Toolbox.Controllers
             if (Mathf.Abs(vertical) < _deadZone)
                 vertical = 0.0f;
         }
+#else
+        protected override void UpdateInput(ref float horizontal, ref float vertical)
+        {
+        }
+#endif
     }
 }

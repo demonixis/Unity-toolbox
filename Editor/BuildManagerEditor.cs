@@ -57,7 +57,7 @@ public class BuildManagerEditor : EditorWindow
         BuildPipeline.BuildPlayer(_completeLevels, path + "/" + buildNames[2] + "/" + _gameName + ".x86", BuildTarget.StandaloneLinuxUniversal, BuildOptions.None);
 
         // Build Mac
-        BuildPipeline.BuildPlayer(_completeLevels, path + "/" + buildNames[3] + "/" + _gameName + ".app", BuildTarget.StandaloneOSXUniversal, BuildOptions.None);
+        BuildPipeline.BuildPlayer(_completeLevels, path + "/" + buildNames[3] + "/" + _gameName + ".app", BuildTarget.StandaloneOSX, BuildOptions.None);
     }
 }
 #endif

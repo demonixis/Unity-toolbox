@@ -1,10 +1,9 @@
 ﻿using System;
 using UnityEngine;
-using UnityStandardAssets.ImageEffects;
+using UnityEngine.Rendering;
 
 namespace Demonixis.Toolbox.Graphics
 {
-    [RequireComponent(typeof(ScreenOverlay))]
     [RequireComponent(typeof(Camera))]
     public sealed class ScreenFader : MonoBehaviour
     {
@@ -13,228 +12,150 @@ namespace Demonixis.Toolbox.Graphics
             FadeIn = 0, FadeOut
         }
 
-        private static ScreenFader[] s_faders;
-        private bool _isFading = false;
-        private short _sign = 1;
-        private ScreenOverlay _overlay;
-        private float fadeSpeed = 0.5f;
+        private static ScreenFader instance = null;
+        private bool m_enabled = false;
+        private short m_sign = 1;
+        private CommandBuffer m_fadeCommand = null;
+        private MaterialPropertyBlock m_fadePropertyBlock = null;
+        private int m_materialFadeID = 0;
+        private Mesh m_planeMesh;
+        private float m_alpha = 1.0f;
 
-        private Canvas _canvas = null;
-        private bool _canvasWasSwitched = false;
-
-        ///
-        /// Gets or sets the overlay intensity.
-        ///
-        public float Intensity
-        {
-            get { return _overlay.intensity; }
-            set { _overlay.intensity = value; }
-        }
-
-        public Action FadeCompleted = null;
-
+        [SerializeField]
+        private float m_fadeSpeed = 2.5f;
+        [SerializeField]
+        private Material FadeMaterial = null;
         [SerializeField]
         private bool _fadeOnStart = true;
-        [SerializeField]
-        private string _mainCanvasTag = "MainUI";
 
-        #region GameState Pattern
-
-        void OnEnable()
+        public static ScreenFader Instance
         {
-            Initialize();
+            get
+            {
+                if (instance == null)
+                    instance = FindObjectOfType<ScreenFader>();
 
+                return instance;
+            }
+        }
+
+        public event Action<int, float> FadeUpdate = null;
+        public event Action FadeCompleted = null;
+
+        private void Awake()
+        {
+            if (instance != null && instance != this)
+            {
+                Debug.LogWarning("Only one ScreenFader component is allowed.");
+                DestroyImmediate(this);
+                return;
+            }
+
+            var verts = new Vector3[]
+            {
+                new Vector3(-1, -1, 0),
+                new Vector3(-1, 1, 0),
+                new Vector3(1, 1, 0),
+                new Vector3(1, -1, 0)
+            };
+
+            m_planeMesh = new Mesh
+            {
+                vertices = verts,
+                triangles = new int[] { 0, 1, 2, 0, 2, 3 }
+            };
+            m_planeMesh.RecalculateBounds();
+
+            m_materialFadeID = Shader.PropertyToID("_Fade");
+            m_fadeCommand = new CommandBuffer();
+            m_fadePropertyBlock = new MaterialPropertyBlock();
+        }
+
+        private void OnEnable()
+        {
             if (_fadeOnStart)
-                StartFade(-1);
+                Fade(-1);
         }
 
-        void OnDestroy()
+        private void Update()
         {
-            if (s_faders != null)
-                s_faders = null;
-        }
-
-        void Update()
-        {
-            if (_isFading)
-            {
-                _overlay.intensity += fadeSpeed * (Time.deltaTime > 0 ? Time.deltaTime : Mathf.Clamp(Time.unscaledDeltaTime, 0, 0.2f)) * _sign;
-
-                if ((_sign == 1 && _overlay.intensity >= 1) || (_sign == -1 && _overlay.intensity <= 0))
-                {
-                    _overlay.intensity = _sign == 1 ? 1 : 0;
-                    _isFading = false;
-
-                    if (_overlay.intensity <= 0)
-                        _overlay.enabled = false;
-
-                    if (FadeCompleted != null)
-                        FadeCompleted();
-
-                    if (_sign == -1)
-                        SwitchCanvasMode(false);
-                }
-            }
-        }
-
-        #endregion
-
-        public void Initialize()
-        {
-            if (_overlay == null)
-            {
-                _overlay = GetComponent<ScreenOverlay>();
-                if (_overlay == null)
-                    _overlay = (ScreenOverlay)gameObject.AddComponent(typeof(ScreenOverlay));
-
-                _overlay.blendMode = ScreenOverlay.OverlayBlendMode.AlphaBlend;
-                _overlay.intensity = 0.0f;
-
-                if (_overlay.texture == null)
-                {
-                    _overlay.texture = new Texture2D(1, 1);
-                    _overlay.texture.SetPixel(0, 0, Color.black);
-                    _overlay.texture.Apply();
-                }
-
-                _overlay.enabled = false;
-
-                var canvasGo = GameObject.FindWithTag(_mainCanvasTag);
-                if (canvasGo != null)
-                    _canvas = canvasGo.GetComponent<Canvas>();
-            }
-        }
-
-        /// <summary>
-        /// Switches the current main canvas to screenspace camera only if it uses the ScreenSpaceOverlay mode.
-        /// </summary>
-        /// <param name="switchToScreenSpace"></param>
-        private void SwitchCanvasMode(bool switchToScreenSpace)
-        {
-            if (UnityEngine.VR.VRSettings.enabled || _canvas == null)
+            if (!m_enabled)
                 return;
 
-            if (switchToScreenSpace && _canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            m_alpha += m_fadeSpeed * (Time.deltaTime > 0 ? Time.deltaTime : Time.unscaledDeltaTime) * m_sign;
+
+            if (FadeUpdate != null)
+                FadeUpdate.Invoke(m_sign, m_alpha);
+
+            if ((m_sign == 1 && m_alpha >= 1) || (m_sign == -1 && m_alpha <= 0))
             {
-                _canvas.renderMode = RenderMode.ScreenSpaceCamera;
-                _canvas.worldCamera = Camera.main;
-                _canvasWasSwitched = true;
+                m_alpha = m_sign == 1 ? 1 : 0;
+
+                if (m_alpha <= 0)
+                    m_enabled = false;
+
+                if (FadeCompleted != null)
+                    FadeCompleted.Invoke();
             }
-            else if (_canvasWasSwitched)
-            {
-                _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-                _canvas.worldCamera = null;
-                _canvasWasSwitched = false;
-            }
+        }
+
+        private void OnPostRender()
+        {
+            if (!m_enabled)
+                return;
+
+            var local = Matrix4x4.TRS(Vector3.forward * 0.3f, Quaternion.identity, Vector3.one);
+            m_fadePropertyBlock.SetFloat(m_materialFadeID, m_alpha);
+            m_fadeCommand.Clear();
+            m_fadeCommand.DrawMesh(m_planeMesh, transform.localToWorldMatrix * local, FadeMaterial, 0, 0, m_fadePropertyBlock);
+            UnityEngine.Graphics.ExecuteCommandBuffer(m_fadeCommand);
         }
 
         public void StartFade(short sign)
         {
-            _sign = sign;
-            _overlay.intensity = _sign == 1 ? 0 : 1;
-            _overlay.enabled = true;
-            _isFading = true;
-            SwitchCanvasMode(true);
+            m_sign = sign;
+            m_alpha = m_sign == 1 ? 0 : 1;
+            m_enabled = true;
         }
 
         public void StopFade()
         {
-            _isFading = false;
-            _overlay.enabled = false;
-            _overlay.intensity = _sign == 1 ? 0 : 1;
-            SwitchCanvasMode(false);
+            m_alpha = m_sign == 1 ? 0 : 1;
+            m_enabled = false;
         }
 
-        public static void FadeIn(float fadeSpeed = 2.5f, Action fadeCompleted = null)
+        public void ResetFade(bool fill)
         {
-            Fade(-1, fadeSpeed, fadeCompleted);
+            m_alpha = fill ? 1.0f : 0.0f;
+            m_enabled = false;
         }
 
-        public static void FadeOut(float fadeSpeed = 2.5f, Action fadeCompleted = null)
+        public static void FadeIn(Action completed = null)
         {
-            Fade(1, fadeSpeed, fadeCompleted);
+            Fade(-1, 2.5f, completed);
         }
 
-        public static void FadeOutIn(float fadeSpeed = 2.5f, Action onFadeOut = null, Action onFadeIn = null)
+        public static void FadeIn(float speed = 2.5f, Action completed = null)
         {
-            FadeOut(fadeSpeed, () =>
-            {
-                if (onFadeOut != null)
-                    onFadeOut();
-
-                FadeIn(fadeSpeed, onFadeIn);
-            });
+            Fade(-1, speed, completed);
         }
 
-        public static void Reset(bool fill)
+        public static void FadeOut(Action completed = null)
         {
-            if (s_faders == null)
-                s_faders = FindObjectsOfType<ScreenFader>();
-
-            if (s_faders.Length == 0)
-                return;
-
-            for (int i = 0, l = s_faders.Length; i < l; i++)
-                s_faders[i].Intensity = fill ? 1.0f : 0.0f;
+            Fade(1, 2.5f, completed);
         }
 
-        public static Texture2D GetOverlayTexture()
+        public static void FadeOut(float speed, Action completed = null)
         {
-            if (s_faders == null)
-                s_faders = FindObjectsOfType<ScreenFader>();
-
-            if (s_faders == null || s_faders.Length == 0)
-                return null;
-
-            return s_faders[0]._overlay.texture;
+            Fade(1, speed, completed);
         }
 
-        public static void SetOverlayTexture(Texture2D texture)
+        private static void Fade(short sign, float fadeSpeed = 0.5f, Action completed = null)
         {
-            if (s_faders == null)
-                s_faders = FindObjectsOfType<ScreenFader>();
-
-            if (s_faders == null || s_faders.Length == 0)
-                return;
-
-            for (int i = 0, l = s_faders.Length; i < l; i++)
-                s_faders[i]._overlay.texture = texture;
-        }
-
-        public static bool IsFading()
-        {
-            if (s_faders == null)
-                s_faders = FindObjectsOfType<ScreenFader>();
-
-            if (s_faders.Length == 0)
-                return false;
-
-            return s_faders[0]._isFading;
-        }
-
-        private static void Fade(short sign, float fadeSpeed = 2.5f, Action fadeCompleted = null)
-        {
-            if (s_faders == null)
-                s_faders = FindObjectsOfType<ScreenFader>();
-
-            if (s_faders.Length == 0)
-            {
-                if (fadeCompleted != null)
-                    fadeCompleted();
-
-                return;
-            }
-
-            for (int i = 0, l = s_faders.Length; i < l; i++)
-            {
-                s_faders[i].Initialize();
-                s_faders[i].fadeSpeed = fadeSpeed;
-
-                if (i == 0)
-                    s_faders[i].FadeCompleted = fadeCompleted;
-
-                s_faders[i].StartFade(sign);
-            }
+            var fade = Instance;
+            fade.m_fadeSpeed = fadeSpeed;
+            fade.FadeCompleted = completed;
+            fade.StartFade(sign);
         }
     }
 }

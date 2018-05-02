@@ -1,4 +1,6 @@
-﻿Shader "Demonixis/LavaShader" {
+﻿// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+
+Shader "Demonixis/LavaShader" {
 	Properties {
 		_MainTexture ("Lava texture", 2D) = "white" {}
 		_BumpTexture ("Bump texture", 2D) = "white" {}
@@ -42,7 +44,7 @@
 			VertexShaderOutput VertexShaderFunction (VertexShaderInput input) 
 			{
 				VertexShaderOutput output;
-				output.Position = mul(UNITY_MATRIX_MVP, input.Position);
+				output.Position = UnityObjectToClipPos(input.Position);
 				output.UV = half2(0.5, 0.5) * input.UV;
 				return output;
 			}
